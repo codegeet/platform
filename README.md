@@ -10,7 +10,7 @@ Here we develop open-source online code execution system.
 ```json
 {
   "code": "class Main {    public static void main(String[] args) {    System.out.print(\"Hello Jesus!\"); }   }",
-  "language_id": "JAVA"
+  "language_id": "java"
 }
 ```
 

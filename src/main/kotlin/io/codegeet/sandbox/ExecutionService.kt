@@ -1,5 +1,6 @@
 package io.codegeet.sandbox
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.codegeet.sandbox.model.Execution
 import io.codegeet.sandbox.model.ExecutionRequest
@@ -28,7 +29,7 @@ class ExecutionService {
         map[executionId] = execution
 
         val containerInput = ContainerInput(
-            language = execution.languageId,
+            languageId = execution.languageId,
             files = arrayOf(ContainerInputFile(name = "Main.java", content = execution.code))
         )
 
@@ -49,7 +50,7 @@ class ExecutionService {
             val output = jacksonObjectMapper().readValue(process.inputStream.readAsText(), ContainerOutput::class.java)
 
             it.copy(
-                stdOut = output.stdout,
+                stdOut = output.stdOut,
                 stdErr = output.stderr,
                 error = process.errorStream.readAsText(), //todo container error
                 exitCode = exitCode
@@ -62,7 +63,8 @@ class ExecutionService {
     fun get(executionId: String): Execution = map[executionId] ?: throw NullPointerException(" Not Found")
 
     data class ContainerInput(
-        val language: Language,
+        @JsonProperty("language_id")
+        val languageId: Language,
         val files: Array<ContainerInputFile>
     )
 
@@ -72,7 +74,9 @@ class ExecutionService {
     )
 
     data class ContainerOutput(
-        val stdout: String,
+        @JsonProperty("std_out")
+        val stdOut: String,
+        @JsonProperty("std_err")
         val stderr: String,
         val error: String,
     )
