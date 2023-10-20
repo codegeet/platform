@@ -28,12 +28,20 @@ class ExecutionService {
         )
         map[executionId] = execution
 
+        val fileName = when (execution.languageId) {
+            Language.JAVA -> "main.java"
+            Language.PYTHON -> "main.py"
+        }
+
         val containerInput = ContainerInput(
             languageId = execution.languageId,
-            files = arrayOf(ContainerInputFile(name = "Main.java", content = execution.code))
+            files = arrayOf(ContainerInputFile(name = fileName, content = execution.code))
         )
 
-        val process = ProcessBuilder("docker run --rm -i -u codegeet -w /home/codegeet codegeet".split(" "))
+        val process = ProcessBuilder(
+            "docker run --rm -i -u codegeet -w /home/codegeet codegeet/${execution.languageId}:latest"
+                .split(" ")
+        )
             .start()
 
         val stdin = process.outputStream
