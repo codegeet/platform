@@ -39,7 +39,7 @@ class ExecutionService {
         )
 
         val process = ProcessBuilder(
-            "docker run --rm -i -u codegeet -w /home/codegeet codegeet/${execution.languageId}:latest"
+            "docker run --rm -i -u codegeet -w /home/codegeet codegeet/${execution.languageId.getId()}:latest"
                 .split(" ")
         )
             .start()
