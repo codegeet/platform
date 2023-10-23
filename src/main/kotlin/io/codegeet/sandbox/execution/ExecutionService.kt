@@ -1,24 +1,29 @@
-package io.codegeet.sandbox
+package io.codegeet.sandbox.execution
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.codegeet.sandbox.model.Execution
 import io.codegeet.sandbox.model.ExecutionRequest
+import io.codegeet.sandbox.model.ExecutionResponse
 import io.codegeet.sandbox.model.Language
+import io.codegeet.sandbox.readAsText
+import org.springframework.data.repository.findByIdOrNull
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.server.ResponseStatusException
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.util.*
 
 @Service
-class ExecutionService {
+class ExecutionService(
+    private val executionRepository: ExecutionRepository
+) {
 
-    private val map = mutableMapOf<String, Execution?>()
-    fun execute(request: ExecutionRequest): String {
+    fun execute(request: ExecutionRequest): ExecutionResponse {
 
-        val executionId = UUID.randomUUID().toString()
         val execution = Execution(
-            executionId = executionId,
+            executionId = UUID.randomUUID().toString(),
             code = request.code,
             languageId = request.languageId,
             stdOut = null,
@@ -26,7 +31,22 @@ class ExecutionService {
             error = null,
             exitCode = null
         )
-        map[executionId] = execution
+
+        executionRepository.save(execution)
+
+        Thread {
+            executeAsync(execution.executionId)
+        }.start()
+
+        return ExecutionResponse(executionId = execution.executionId.toString())
+    }
+
+    fun executeAsync(executionId: String) {
+
+        val execution = executionRepository.findByIdOrNull(executionId) ?: throw ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Execution '$executionId' does not exist."
+        )
 
         val fileName = when (execution.languageId) {
             Language.JAVA -> "main.java"
@@ -53,9 +73,9 @@ class ExecutionService {
 
         val exitCode = process.waitFor()
 
-        map[executionId] = map[executionId]?.let {
-
-            val output = jacksonObjectMapper().readValue(process.inputStream.readAsText(), ContainerOutput::class.java)
+        executionRepository.save(execution.let {
+            val output =
+                jacksonObjectMapper().readValue(process.inputStream.readAsText(), ContainerOutput::class.java)
 
             it.copy(
                 stdOut = output.stdOut,
@@ -63,12 +83,10 @@ class ExecutionService {
                 error = process.errorStream.readAsText(), //todo container error
                 exitCode = exitCode
             )
-        }
-
-        return executionId
+        })
     }
 
-    fun get(executionId: String): Execution = map[executionId] ?: throw NullPointerException(" Not Found")
+    fun get(executionId: String): Execution? = executionRepository.findByIdOrNull(executionId)
 
     data class ContainerInput(
         @JsonProperty("language_id")
