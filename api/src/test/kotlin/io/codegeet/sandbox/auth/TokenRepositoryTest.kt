@@ -15,11 +15,11 @@ class TokenRepositoryTest @Autowired constructor(
 
     @Test
     fun `create and get token`() {
-        val token = Token(UUID.randomUUID())
+        val token = Token(UUID.randomUUID().toString())
         entityManager.persist(token)
         entityManager.flush()
 
-        val found = tokenRepository.findByIdOrNull(token.uuid)
+        val found = tokenRepository.findByIdOrNull(token.token)
 
         // todo assert
     }
