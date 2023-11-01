@@ -45,23 +45,24 @@ compiles and executes the code, and then writes the result in JSON format to the
 At present, **coderunner** shares many similarities with [glot](https://github.com/glotcode/code-runner).
 
 ## Supported languages
-- JAVA
+- Java
+- Python
 - ... more to come ;)
 
 ## Input (stdin)
 ```json
 {
-    "language_id": "java",
-    "content": "class Main {    public static void main(String[] args) {    System.out.print(\"Hello World!!!\"); }   }"
+  "language_id": "python",
+  "content": "print(\"Hello, Python!\")"
 }
 ```
 
 ## Output (stdout)
 ```json
 {
-    "std_out":"Hello World!!!",
-    "std_err":"",
-    "error":""
+  "std_out": "Hello, Python!\n",
+  "std_err": "",
+  "error": ""
 }
 ```
 

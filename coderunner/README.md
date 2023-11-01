@@ -7,12 +7,13 @@ At present, **coderunner** shares many similarities with [glot](https://github.c
 
 ## Supported languages
 - JAVA
+- PYTHON
 - ... more to come ;)
 
 ## Input (stdin)
 ```json
 {
-  "language_id": "java",
+  "language_id": "python",
   "content": "class Main {    public static void main(String[] args) {    System.out.print(\"Hello World!!!\"); }   }"
 }
 ```
@@ -25,8 +26,3 @@ At present, **coderunner** shares many similarities with [glot](https://github.c
     "error":""
 }
 ```
-
-## Special Thanks
-Special thanks to similar open-source projects:
-- [glot](https://github.com/glotcode)
-- [Judge0](https://github.com/judge0)
