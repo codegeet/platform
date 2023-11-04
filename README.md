@@ -1,5 +1,25 @@
-# Codegeet sandbox
-Here we develop open-source online code execution system.
+# CodeGeet
+Here we build open-source online code execution system.
+
+### Components
+
+- [Sandbox](https://github.com/codegeet/sandbox/tree/main/api) API
+- [Docker Images](https://github.com/codegeet/images) with [Code Runner](https://github.com/codegeet/sandbox/tree/main/coderunner) that is used by Sandbox  
+  
+### Overview
+
+```mermaid
+flowchart TD
+A[CodeGeet Sandbox API] --> L{Language?}
+
+L -->|Java| J(Docker Image)
+L -->|Python| P(Docker Image)
+L -->|...| O(Docker Image)
+
+J --> RJ[Code Runner]
+P --> RP[Code Runner]
+O --> RO[Code Runner]
+```
 
 # Interface
 
