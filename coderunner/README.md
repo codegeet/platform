@@ -14,7 +14,7 @@ At present, **coderunner** shares many similarities with [glot](https://github.c
 ```json
 {
   "language_id": "python",
-  "content": "class Main {    public static void main(String[] args) {    System.out.print(\"Hello World!!!\"); }   }"
+  "code": "print(\"Hello World!!!\")"
 }
 ```
 
@@ -25,4 +25,16 @@ At present, **coderunner** shares many similarities with [glot](https://github.c
     "std_err":"",
     "error":""
 }
+```
+
+## Test locally
+
+Download `coderunner.jar` from [releases](https://github.com/codegeet/codegeet/releases).
+
+Run:
+```bash
+echo '{
+  "language_id": "python",
+  "code": "print(\"Hello World!!!\")"
+}' | java -jar coderunner.jar
 ```
