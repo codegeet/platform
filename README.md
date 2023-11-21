@@ -62,7 +62,6 @@ O --> RO[Code Runner]
 ## Overview
 **coderunner** is a command-line tool that reads code in JSON format from the standard input (stdin),
 compiles and executes the code, and then writes the result in JSON format to the standard output (stdout).
-At present, **coderunner** shares many similarities with [glot](https://github.com/glotcode/code-runner).
 
 ## Supported languages
 - Java
