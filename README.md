@@ -29,7 +29,7 @@ O --> RO[Code Runner]
 
 ```json
 {
-  "code": "class Main {    public static void main(String[] args) {    System.out.print(\"Hello Jesus!\"); }   }",
+  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello Jesus!\"); } }",
   "language_id": "java"
 }
 ```
@@ -49,8 +49,8 @@ O --> RO[Code Runner]
 {
   "execution_id": "0f98b086-a060-4a78-a80e-4beb59460225",
   "language_id": "JAVA",
-  "code": "class Main {    public static void main(String[] args) {    System.out.print(\"Hello Jesus!\"); }   }",
-  "std_out": "Hello Jesus!",
+  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello Java!\"); } }",
+  "std_out": "Hello Java!",
   "std_err": "",
   "error": "",
   "exit_code": 0
