@@ -13,7 +13,7 @@ class Runner(private val languages: Languages) {
         input: ApplicationInput
     ): ApplicationOutput {
 
-        val properties = languages.getSettingsFor(input.languageId)
+        val properties = languages.getSettingsFor(input.language)
 
         // todo add --path argument
         val directory = System.getProperty("user.dir").orEmpty()

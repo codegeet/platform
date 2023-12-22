@@ -1,4 +1,4 @@
-package io.codegeet.sandbox.model
+package io.codegeet.sandbox.languages
 
 import com.fasterxml.jackson.annotation.JsonValue
 

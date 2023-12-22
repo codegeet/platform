@@ -1,11 +1,10 @@
 package io.codegeet.sandbox.execution
 
 import io.codegeet.sandbox.auth.AuthService
-import io.codegeet.sandbox.model.ExecutionRequest
-import io.codegeet.sandbox.model.ExecutionResponse
-import org.springframework.http.HttpStatus
+import io.codegeet.sandbox.execution.model.Execution
+import io.codegeet.sandbox.execution.model.ExecutionRequest
+import io.codegeet.sandbox.execution.model.ExecutionResponse
 import org.springframework.web.bind.annotation.*
-import org.springframework.web.server.ResponseStatusException
 
 @RestController
 class ExecutionController(
@@ -20,7 +19,7 @@ class ExecutionController(
     ): ExecutionResponse {
         auth.getToken(authorization)
 
-        return executionService.execute(request)
+        return executionService.handleExecutionRequest(request)
     }
 
     @GetMapping("/execution/{execution_id}")
@@ -30,10 +29,7 @@ class ExecutionController(
     ): Execution {
         auth.getToken(authorization)
 
-        return executionService.get(executionId) ?: throw ResponseStatusException(
-            HttpStatus.NOT_FOUND,
-            "Execution '$executionId' does not exist."
-        )
+        return executionService.getExecution(executionId)
     }
 
 }

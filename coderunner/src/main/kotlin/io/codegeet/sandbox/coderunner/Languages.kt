@@ -20,8 +20,8 @@ class Languages {
         }
     }
 
-    fun getSettingsFor(languageId: String): Settings {
-        return settings[languageId] ?: throw IllegalArgumentException("Settings for '$languageId' not found.")
+    fun getSettingsFor(language: String): Settings {
+        return settings[language] ?: throw IllegalArgumentException("Settings for '$language' not found.")
     }
 
     data class Settings(
