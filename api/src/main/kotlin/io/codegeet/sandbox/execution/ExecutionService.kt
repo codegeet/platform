@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
+import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.StreamType
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
@@ -19,6 +20,7 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.net.URI
 import java.time.Duration
+import java.time.Instant
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -38,7 +40,8 @@ class ExecutionService(
                 stdOut = null,
                 stdErr = null,
                 error = null,
-                exitCode = null
+                exitCode = null,
+                createdAt = Instant.now()
             )
         )
 
@@ -70,31 +73,42 @@ class ExecutionService(
             jacksonObjectMapper().writeValueAsString(containerInput)
         )
 
+        val executedAt = Instant.now()
+
         executionRepository.save(
             execution.copy(
                 stdOut = containerOutput.stdOut,
                 stdErr = containerOutput.stderr,
-                error = "", //todo
-                exitCode = 0
+                error = containerOutput.error,
+                executedAt = executedAt,
+                totalExecutionMillis = executedAt.toEpochMilli() - execution.createdAt.toEpochMilli(),
+                exitCode = if (containerOutput.stderr.isNotEmpty()) 1 else 0
             )
         )
     }
 
     private fun executeCmd(imageName: String, stdin: String): ContainerOutput {
+        val hostConfig: HostConfig = HostConfig.newHostConfig()
+            .withMemory(128000000L)
+            .withCpuPeriod(100000)
+            .withCpuQuota(50000)
+            .withNetworkMode("none")
+
         val config = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost("unix:///var/run/docker.sock")
             .build()
 
         val dockerHttpClient = ZerodepDockerHttpClient.Builder()
             .dockerHost(URI("unix:///var/run/docker.sock"))
-            .maxConnections(100)
-            .connectionTimeout(Duration.ofSeconds(30))
-            .responseTimeout(Duration.ofSeconds(45))
+            .maxConnections(30)
+            .connectionTimeout(Duration.ofSeconds(15))
+            .responseTimeout(Duration.ofSeconds(30))
             .build()
 
         val dockerClient = DockerClientImpl.getInstance(config, dockerHttpClient)
 
         val container = dockerClient.createContainerCmd(imageName)
+            .withHostConfig(hostConfig)
             .withTty(true)
             .withStdinOpen(true)
             .withUser("codegeet")
@@ -146,6 +160,10 @@ class ExecutionService(
                 StreamType.STDERR -> stdErrBuilder.append(String(frame.payload))
                 else -> {}
             }
+        }
+
+        override fun onError(throwable: Throwable?) {
+            super.onError(throwable)
         }
 
         fun getStdOut(): String = stdOutBuilder.toString()

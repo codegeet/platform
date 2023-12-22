@@ -21,17 +21,18 @@ class Runner(private val languages: Languages) {
 
         // build
         properties.build?.let { command ->
-            val buildProcess = ProcessBuilder(command.split(" "))
+            val process = ProcessBuilder(command.split(" "))
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .directory(File(directory))
                 .start()
 
-            val code = buildProcess.waitFor()
+            val code = process.waitFor()
 
             if (code != 0) {
                 return ApplicationOutput(
-                    stdOut = buildProcess.inputStream.readAsText(),
-                    stdErr = "",
-                    error = buildProcess.errorStream.readAsText().also { print(it) },
+                    stdOut = "",
+                    stdErr = process.inputStream.readAsText(),
+                    error = process.errorStream.readAsText().also { print(it) },
                 )
             }
         }
