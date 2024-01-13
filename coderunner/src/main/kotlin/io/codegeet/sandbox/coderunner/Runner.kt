@@ -3,54 +3,78 @@ package io.codegeet.sandbox.coderunner
 import io.codegeet.sandbox.coderunner.model.ApplicationInput
 import io.codegeet.sandbox.coderunner.model.ApplicationOutput
 import java.io.File
+import java.lang.System.currentTimeMillis
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
-class Runner(private val languages: Languages) {
+class Runner {
 
     fun run(
         input: ApplicationInput
     ): ApplicationOutput {
 
-        val properties = languages.getSettingsFor(input.language)
+        val directory = try {
+            val directory = getUserHomeDirectory()
+            writeFiles(input.code, directory, input.fileName)
 
-        // todo add --path argument
-        val directory = System.getProperty("user.dir").orEmpty()
-        writeFiles(input.code, directory, properties.fileName)
+            directory
+        } catch (e: Exception) {
+            return ApplicationOutput(error = "Something went wrong during the build: ${e.message}")
+        }
 
         // build
-        properties.build?.let { command ->
-            val process = ProcessBuilder(command.split(" "))
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-                .directory(File(directory))
-                .start()
+        input.instructions.build
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { command ->
+                try {
+                    val process = ProcessBuilder(command.split(" "))
+                        .directory(File(directory))
+                        .start()
 
-            val code = process.waitFor()
+                    val code = process.waitFor()
 
-            if (code != 0) {
-                return ApplicationOutput(
-                    stdOut = "",
-                    stdErr = process.inputStream.readAsText(),
-                    error = process.errorStream.readAsText().also { print(it) },
-                )
+                    if (code != 0) {
+                        return ApplicationOutput(
+                            stdErr = process.inputStream.readAsText(),
+                            error = process.errorStream.readAsText(),
+                        )
+                    }
+                } catch (e: Exception) {
+                    return ApplicationOutput(error = "Something went wrong during the build: ${e.message}")
+                }
             }
-        }
 
         // execute
-        properties.run.let { command ->
-            val process = ProcessBuilder(command.split(" "))
-                .directory(File(directory))
-                .start()
+        input.instructions.exec
+            .takeIf { it.isNotEmpty() }
+            ?.let { command ->
+                try {
+                    val processBuilder = ProcessBuilder(command.split(" ") + input.args.orEmpty())
+                        .directory(File(directory))
 
-            process.waitFor()
+                    val startMillis = currentTimeMillis()
 
-            return ApplicationOutput(
-                stdOut = process.inputStream.readAsText(),
-                stdErr = process.errorStream.readAsText(),
-                error = ""
-            )
-        }
+                    val process = processBuilder.start()
+                    val code = process.waitFor()
+
+                    val endMillis = currentTimeMillis()
+
+                    return ApplicationOutput(
+                        stdOut = process.inputStream.readAsText(),
+                        stdErr = process.errorStream.readAsText(),
+                        execCode = code,
+                        execMillis = endMillis - startMillis,
+                    )
+                } catch (e: Exception) {
+                    return ApplicationOutput(error = e.message ?: "Something went wrong during the exec: ${e.message}")
+                }
+            }
+            ?: return ApplicationOutput(error = "Execution should not be empty.")
+    }
+
+    private fun getUserHomeDirectory(): String {
+        return System.getProperty("user.home")
     }
 
     private fun writeFiles(

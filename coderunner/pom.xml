@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>coderunner</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -24,11 +24,16 @@
             <artifactId>jackson-module-kotlin</artifactId>
             <version>2.15.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
-        <sourceDirectory>../../sandbox/coderunner/src/main/kotlin</sourceDirectory>
-        <testSourceDirectory>../../sandbox/coderunner/src/test/kotlin</testSourceDirectory>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
+        <testSourceDirectory>src/test/kotlin</testSourceDirectory>
         <plugins>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>

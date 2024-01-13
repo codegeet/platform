@@ -1,0 +1,9 @@
+{
+  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello, \" + args[0] + \"!\"); }}",
+  "args": ["you"],
+  "fileName": "Main.java",
+  "instructions": {
+    "build": "javac Main.java",
+    "exec": "java Main"
+  }
+}

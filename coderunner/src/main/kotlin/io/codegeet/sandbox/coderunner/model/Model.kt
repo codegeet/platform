@@ -3,19 +3,32 @@ package io.codegeet.sandbox.coderunner.model
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class ApplicationInput(
-    @JsonProperty("language")
-    val language: String,
     @JsonProperty("code")
-    val code: String
-    //todo add stdin
-    //todo add command
+    val code: String,
+    @JsonProperty("args")
+    val args: List<String>?,
+    @JsonProperty("fileName")
+    val fileName: String,
+    @JsonProperty("instructions")
+    val instructions: Instructions
+)
+
+data class Instructions(
+    @JsonProperty("build")
+    val build: String? = null,
+    @JsonProperty("exec")
+    val exec: String,
 )
 
 data class ApplicationOutput(
     @JsonProperty("std_out")
-    val stdOut: String,
+    val stdOut: String = "",
     @JsonProperty("std_err")
-    val stdErr: String,
+    val stdErr: String = "",
     @JsonProperty("error")
-    val error: String,
+    val error: String = "",
+    @JsonProperty("execCode")
+    val execCode: Int? = null,
+    @JsonProperty("executionMillis")
+    val execMillis: Long? = null,
 )

@@ -1,14 +1,18 @@
 package io.codegeet.sandbox.coderunner
 
+import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.codegeet.sandbox.coderunner.model.ApplicationInput
 import io.codegeet.sandbox.coderunner.model.ApplicationOutput
 
 class Application(private val runner: Runner) {
     fun run(args: Array<String>) {
-        val result = parseInput()?.let { runner.run(it) }
-            ?: ApplicationOutput(stdOut = "", stdErr = "", error = "Input is empty.")
-
+        val result = try {
+            parseInput()?.let { runner.run(it) }
+                ?: ApplicationOutput(stdOut = "", stdErr = "", error = "Coderunner input is empty.")
+        } catch (e: JsonMappingException) {
+            ApplicationOutput(stdOut = "", stdErr = "", error = "Failed to parse coderunner input: ${e.message}")
+        }
         println(result.toJson())
     }
 
@@ -31,5 +35,5 @@ class Application(private val runner: Runner) {
 }
 
 fun main(args: Array<String>) {
-    Application(Runner(Languages())).run(args)
+    Application(Runner()).run(args)
 }
