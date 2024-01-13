@@ -2,6 +2,7 @@ package io.codegeet.sandbox.languages
 
 import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import org.springframework.stereotype.Service
 
 enum class Language(private val id: String) {
     JAVA("java"),
@@ -11,6 +12,7 @@ enum class Language(private val id: String) {
     fun getId(): String = id
 }
 
+@Service
 class Languages {
     companion object {
         val settings: Map<Language, Settings> by lazy {
@@ -35,7 +37,7 @@ class Languages {
 
     data class Settings(
         val build: String?,
-        val run: String,
+        val exec: String,
         val fileName: String,
     )
 }

@@ -8,6 +8,7 @@ import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.StreamType
 import io.codegeet.sandbox.languages.Language
+import io.codegeet.sandbox.languages.Languages
 import org.springframework.stereotype.Service
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
@@ -16,14 +17,22 @@ import java.util.concurrent.TimeUnit
 @Service
 class ContainerService(
     private val dockerClient: DockerClient,
-    private val configuration: ContainerConfiguration
+    private val configuration: ContainerConfiguration,
+    private val languages: Languages
 ) {
 
     fun run(language: Language, code: String): CoderunnerOutput {
 
+        val languageSettings = languages.getSettingsFor(language)
+
         val coderunnerInput = CoderunnerInput(
-            language = language,
-            code = code
+            code = code,
+            args = emptyList(),
+            fileName = languageSettings.fileName,
+            instructions = Instructions(
+                build = languageSettings.build,
+                exec = languageSettings.exec
+            )
         )
 
         val imageName = "codegeet/${language.getId()}:latest"
@@ -86,11 +95,21 @@ class ContainerService(
     }
 
     data class CoderunnerInput(
-        @JsonProperty("language")
-        val language: Language,
-        val code: String
-        //todo add stdin
-        //todo add command
+        @JsonProperty("code")
+        val code: String,
+        @JsonProperty("args")
+        val args: List<String>?,
+        @JsonProperty("fileName")
+        val fileName: String,
+        @JsonProperty("instructions")
+        val instructions: Instructions
+    )
+
+    data class Instructions(
+        @JsonProperty("build")
+        val build: String? = null,
+        @JsonProperty("exec")
+        val exec: String,
     )
 
     data class CoderunnerOutput(

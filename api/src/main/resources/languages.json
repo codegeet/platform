@@ -1,12 +1,12 @@
 {
   "java": {
     "build": "javac Main.java",
-    "run": "java Main",
+    "exec": "java Main",
     "fileName": "Main.java"
   },
   "python": {
     "build": null,
-    "run": "python3 main.py",
+    "exec": "python3 main.py",
     "fileName": "main.py"
   }
 }
