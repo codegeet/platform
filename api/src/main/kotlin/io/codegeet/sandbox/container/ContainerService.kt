@@ -74,7 +74,8 @@ class ContainerService(
 
         val containerCallback = MyResultCallback()
 
-        execStartCmd.withStdIn(inputStream).exec(containerCallback)
+        execStartCmd.withStdIn(inputStream)
+            .exec(containerCallback)
             .awaitCompletion(configuration.timeoutSeconds, TimeUnit.SECONDS)
 
         dockerClient.stopContainerCmd(container.id).exec()
@@ -119,6 +120,10 @@ class ContainerService(
         val stdErr: String,
         @JsonProperty("error")
         val error: String,
+        @JsonProperty("execCode")
+        val execCode: Int? = null,
+        @JsonProperty("executionMillis")
+        val execMillis: Long? = null,
     )
 
     class MyResultCallback : ResultCallback.Adapter<Frame>() {
@@ -134,11 +139,10 @@ class ContainerService(
         }
 
         override fun onError(throwable: Throwable?) {
-            super.onError(throwable)
+            stdErrBuilder.append("Error during container execution.")
         }
 
         fun getStdOut(): String = stdOutBuilder.toString()
         fun getStdErr(): String = stdErrBuilder.toString()
     }
-
 }
