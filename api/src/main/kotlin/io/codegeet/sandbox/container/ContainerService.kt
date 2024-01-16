@@ -38,9 +38,9 @@ class ContainerService(
         val imageName = "codegeet/${language.getId()}:latest"
 
         val hostConfig: HostConfig = HostConfig.newHostConfig()
-            .withMemory(configuration.memory)
-            .withCpuPeriod(configuration.cpuPeriod)
-            .withCpuQuota(configuration.cpuQuota)
+//            .withMemory(configuration.memory)
+//            .withCpuPeriod(configuration.cpuPeriod)
+//            .withCpuQuota(configuration.cpuQuota)
             .withNetworkMode("none")
 
         val container = dockerClient.createContainerCmd(imageName)
@@ -86,7 +86,7 @@ class ContainerService(
                 containerCallback.getStdOut(),
                 CoderunnerOutput::class.java
             )
-        } ?: CoderunnerOutput(stdOut = "", stdErr = "", error = "")
+        } ?: CoderunnerOutput(stdOut = "", stdErr = "", error = "No stdout from container.")
 
         return CoderunnerOutput(
             stdOut = coderunnerStdOutput.stdOut,

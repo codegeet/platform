@@ -9,5 +9,5 @@ data class ContainerConfiguration(
     var memory: Long = 128000000,
     var cpuPeriod: Long = 100000,
     var cpuQuota: Long = 50000,
-    var timeoutSeconds: Long = 10,
+    var timeoutSeconds: Long = 15,
 )
