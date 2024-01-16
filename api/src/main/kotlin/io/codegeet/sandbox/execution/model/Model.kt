@@ -15,6 +15,7 @@ data class Execution(
     @JsonProperty("language")
     val language: Language,
     @JsonProperty("code")
+    @Column(columnDefinition = "TEXT")
     val code: String,
     @JsonProperty("std_out")
     @Column(columnDefinition = "TEXT")
