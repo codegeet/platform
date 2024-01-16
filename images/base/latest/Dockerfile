@@ -12,6 +12,4 @@ ADD https://github.com/codegeet/codegeet/releases/download/v0.1.0-beta/coderunne
 RUN chown codegeet:codegeet /home/codegeet/coderunner.jar
 RUN chmod +x /home/codegeet/coderunner.jar
 
-USER codegeet
-
 ENTRYPOINT ["java", "-jar", "coderunner.jar"]
