@@ -1,7 +1,6 @@
 package io.codegeet.sandbox.execution.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import io.codegeet.sandbox.languages.Language
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -13,7 +12,7 @@ data class Execution(
     @JsonProperty("execution_id")
     val executionId: String,
     @JsonProperty("language")
-    val language: Language,
+    val language: String,
     @JsonProperty("code")
     @Column(columnDefinition = "TEXT")
     val code: String,
@@ -40,7 +39,7 @@ data class ExecutionRequest(
     @JsonProperty("code")
     val code: String,
     @JsonProperty("language")
-    val language: Language,
+    val language: String,
     @JsonProperty("sync")
     val sync: Boolean? = false,
 )

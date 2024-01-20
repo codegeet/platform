@@ -2,11 +2,26 @@
   "java": {
     "build": "javac Main.java",
     "exec": "java Main",
-    "fileName": "Main.java"
+    "file_name": "Main.java"
   },
   "python": {
-    "build": null,
-    "exec": "python3 main.py",
-    "fileName": "main.py"
+    "build": "",
+    "exec": "python3 app.py",
+    "file_name": "app.py"
+  },
+  "csharp": {
+    "build": "mcs -out:app.exe app.cs",
+    "exec": "python3 app.py",
+    "file_name": "mono app.exe"
+  },
+  "js": {
+    "build": "",
+    "exec": "node app.js",
+    "file_name": "app.js"
+  },
+  "ts": {
+    "build": "tsc app.ts",
+    "exec": "node app.js",
+    "file_name": "app.ts"
   }
 }

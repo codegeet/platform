@@ -1,28 +1,21 @@
 package io.codegeet.sandbox.languages
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.springframework.stereotype.Service
 
-enum class Language(private val id: String) {
-    JAVA("java"),
-    PYTHON("python");
-
-    @JsonValue
-    fun getId(): String = id
-}
-
 @Service
 class Languages {
     companion object {
-        val settings: Map<Language, Settings> by lazy {
+        val settings: Map<String, Settings> by lazy {
             val objectMapper = jacksonObjectMapper()
 
             Thread.currentThread().contextClassLoader.getResourceAsStream("languages.json")?.let {
-                val map: Map<Language, Settings> = objectMapper.readValue(
+                val map: Map<String, Settings> = objectMapper.readValue(
                     it, objectMapper.typeFactory.constructMapType(
                         Map::class.java,
-                        Language::class.java,
+                        String::class.java,
                         Settings::class.java
                     )
                 )
@@ -31,13 +24,14 @@ class Languages {
         }
     }
 
-    fun getSettingsFor(language: Language): Settings {
+    fun getSettingsFor(language: String): Settings {
         return settings[language] ?: throw IllegalArgumentException("Settings for '$language' not found.")
     }
 
     data class Settings(
-        val build: String?,
+        val build: String,
         val exec: String,
+        @JsonProperty("file_name")
         val fileName: String,
     )
 }
