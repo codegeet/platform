@@ -52,12 +52,12 @@ class ExecutionService(
         val executedAt = Instant.now()
         executionRepository.save(
             execution.copy(
-                stdOut = coderunnerOutput.stdOut,
-                stdErr = coderunnerOutput.stdErr,
-                error = coderunnerOutput.error,
+                stdOut = coderunnerOutput?.stdOut,
+                stdErr = coderunnerOutput?.stdErr,
+                error = coderunnerOutput?.error,
                 executedAt = executedAt,
                 totalExecutionMillis = executedAt.toEpochMilli() - execution.createdAt.toEpochMilli(),
-                exitCode = if (coderunnerOutput.stdErr.isNotEmpty()) 1 else 0
+                exitCode = if (coderunnerOutput?.stdErr?.isNotEmpty() == true) 1 else 0
             )
         )
     }
