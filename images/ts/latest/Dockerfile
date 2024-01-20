@@ -1,9 +1,11 @@
-FROM python:3-slim
+FROM node:slim
 
 MAINTAINER Vladimir Prudnikov "codegeet@gmail.com"
 
 RUN groupadd codegeet
 RUN useradd -m -d /home/codegeet -g codegeet -s /bin/rbash codegeet
+
+RUN npm install -g typescript
 
 RUN set -xe && \
     apt-get update && \

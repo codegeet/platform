@@ -1,4 +1,4 @@
-FROM python:3-slim
+FROM node:slim
 
 MAINTAINER Vladimir Prudnikov "codegeet@gmail.com"
 
