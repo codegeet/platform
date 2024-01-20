@@ -1,11 +1,11 @@
 #!/bin/bash
 
 echo '{
-  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello, CodeGeet!\"); }}",
+  "code": "console.log(\"Hello, CodeGeet!\");",
   "args": [],
-  "file_name": "Main.java",
+  "file_name": "app.js",
   "instructions": {
-    "build": "javac Main.java",
-    "exec": "java Main"
+    "build": "",
+    "exec": "node app.js"
   }
-}' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/java:latest
+}' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/js:latest

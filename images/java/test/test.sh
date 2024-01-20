@@ -1,11 +1,11 @@
 #!/bin/bash
 
 echo '{
-  "code": "using System; class HelloWorld { static void Main() { Console.WriteLine(\"Hello, CodeGeet!\"); } }",
+  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello, CodeGeet!\"); }}",
   "args": [],
-  "file_name": "app.cs",
+  "file_name": "Main.java",
   "instructions": {
-    "build": "mcs -out:app.exe app.cs",
-    "exec": "mono app.exe"
+    "build": "javac Main.java",
+    "exec": "java Main"
   }
-}' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/csharp:latest
+}' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/java:latest
