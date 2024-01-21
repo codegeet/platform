@@ -61,7 +61,7 @@ echo '{
 
 ### Author
 
-As the author was not extensively familiar with Bash scripting, **coderunner** has been written by ChatGPT.  
+As the author was not much familiar with Bash scripting, so **coderunner** has been written by ChatGPT.  
 
 #### Prompt: 
 ```txt
