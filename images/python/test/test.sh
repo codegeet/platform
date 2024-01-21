@@ -5,7 +5,7 @@
   "args": [],
   "file_name": "app.py",
   "instructions": {
-    "build": "",
+    "compile": "",
     "exec": "python app.py"
   }
 }' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/python:latest

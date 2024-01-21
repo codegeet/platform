@@ -29,7 +29,7 @@ class Languages {
     }
 
     data class Settings(
-        val build: String,
+        val compile: String,
         val exec: String,
         @JsonProperty("file_name")
         val fileName: String,

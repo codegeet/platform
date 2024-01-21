@@ -20,7 +20,7 @@ class ContainerService(
             args = emptyList(),
             fileName = languageSettings.fileName,
             instructions = Instructions(
-                build = languageSettings.build,
+                compile = languageSettings.compile,
                 exec = languageSettings.exec
             )
         )
@@ -42,8 +42,8 @@ class ContainerService(
     )
 
     data class Instructions(
-        @JsonProperty("build")
-        val build: String? = null,
+        @JsonProperty("compile")
+        val compile: String,
         @JsonProperty("exec")
         val exec: String,
     )

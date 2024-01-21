@@ -5,7 +5,7 @@ echo '{
   "args": [],
   "file_name": "app.ts",
   "instructions": {
-    "build": "tsc app.ts",
+    "compile": "tsc app.ts",
     "exec": "node app.js"
   }
 }' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/ts:latest

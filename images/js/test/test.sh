@@ -5,7 +5,7 @@ echo '{
   "args": [],
   "file_name": "app.js",
   "instructions": {
-    "build": "",
+    "compile": "",
     "exec": "node app.js"
   }
 }' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/js:latest

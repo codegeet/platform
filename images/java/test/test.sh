@@ -5,7 +5,7 @@ echo '{
   "args": [],
   "file_name": "Main.java",
   "instructions": {
-    "build": "javac Main.java",
+    "compile": "javac Main.java",
     "exec": "java Main"
   }
 }' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/java:latest
