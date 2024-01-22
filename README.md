@@ -1,10 +1,26 @@
 # CodeGeet
 Here we build open-source online code execution system.
 
+# CodeGeet 
+
+Welcome to the Code Execution Platform, 
+an open-source solution for executing code in isolated, secure Docker containers.  
+This platform is designed to run code snippets in a variety of programming languages, ensuring a safe execution environment for code testing, development, and educational purposes.
+
+## Features
+
+- **Isolated Execution**: Each code snippet runs in a separate Docker container, providing a secure and isolated environment.
+- **Multi-Language Support**: Compatible with various programming languages, easily extendable to include more.
+- **Scalable Architecture**: Designed to handle multiple concurrent code executions efficiently.
+- **Easy Integration**: Offers a straightforward API for integrating with other applications and services.
+
+## Getting Started
+
 ### Components
 
-- [Sandbox](https://github.com/codegeet/sandbox/tree/main/api) API
-- [Docker Images](https://github.com/codegeet/images) with [Code Runner](https://github.com/codegeet/sandbox/tree/main/coderunner) that is used by Sandbox  
+- [Platform](https://github.com/codegeet/codegeet) that runs Docer containers and provides an API
+- [Docker Images](https://github.com/codegeet/codegeet/tree/main/images) for various programming languages
+- [Code Runner](https://github.com/codegeet/codegeet/tree/main/coderunner) installed in a container to compile and execute the code 
   
 ### Overview
 
