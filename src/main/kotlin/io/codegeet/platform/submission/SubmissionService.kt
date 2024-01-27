@@ -1,4 +1,4 @@
-package io.codegeet.platform.execution
+package io.codegeet.platform.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.codegeet.platform.config.Language
@@ -7,11 +7,11 @@ import io.codegeet.platform.docker.DockerInput
 import io.codegeet.platform.docker.DockerOutput
 import io.codegeet.platform.docker.DockerService
 import io.codegeet.platform.exceptions.ExecutionNotFoundException
-import io.codegeet.platform.execution.api.ExecutionRequest
-import io.codegeet.platform.execution.api.ExecutionStatus
-import io.codegeet.platform.execution.data.Execution
-import io.codegeet.platform.execution.data.ExecutionInputOutput
-import io.codegeet.platform.execution.data.ExecutionsRepository
+import io.codegeet.platform.submission.api.SubmissionRequest
+import io.codegeet.platform.submission.data.Submission
+import io.codegeet.platform.submission.data.Execution
+import io.codegeet.platform.submission.data.ExecutionStatus
+import io.codegeet.platform.submission.data.SubmissionRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.Clock
@@ -21,57 +21,57 @@ import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
-class ExecutionService(
-    private val executionRepository: ExecutionsRepository,
+class SubmissionService(
+    private val submissionRepository: SubmissionRepository,
     private val dockerClient: DockerService,
     private val languageConfiguration: LanguageConfiguration,
     private val objectMapper: ObjectMapper,
     private val clock: Clock,
 ) {
 
-    fun handle(request: ExecutionRequest): Execution {
-        val execution = request.toExecution(Instant.now(clock).truncatedTo(ChronoUnit.MILLIS))
+    fun handle(request: SubmissionRequest): Submission {
+        val submission = request.toSubmission(Instant.now(clock).truncatedTo(ChronoUnit.MILLIS))
 
-        executionRepository.save(execution)
+        submissionRepository.save(submission)
 
         return if (request.sync == true) {
-            execute(execution.executionId)
-            getExecution(execution.executionId)
+            execute(submission.submissionId)
+            getSubmission(submission.submissionId)
         } else {
-            Thread { execute(execution.executionId) }.start()
-            execution
+            Thread { execute(submission.submissionId) }.start()
+            submission
         }
     }
 
-    fun getExecution(executionId: String): Execution = executionRepository.findByIdOrNull(executionId)
-        ?: throw ExecutionNotFoundException("Execution '$executionId' not found.")
+    fun getSubmission(submissionId: String): Submission = submissionRepository.findByIdOrNull(submissionId)
+        ?: throw ExecutionNotFoundException("Submission '$submissionId' not found.")
 
-    private fun execute(executionId: String) {
-        val execution = getExecution(executionId)
-        val executions = execution.executions.map {
+    private fun execute(submissionId: String) {
+        val submission = getSubmission(submissionId)
+        val executions = submission.executions.map {
             DockerInput.ExecutionInput(
                 args = it.args?.split(" ").orEmpty(),
                 stdIn = it.stdIn
             )
         }
 
-        val output = execute(execution.language, execution.code, executions)
+        val output = execute(submission.language, submission.code, executions)
 
-        execution.totalTime = Duration.between(execution.createdAt, Instant.now()).toMillis()
-        execution.error = output.error
-        execution.status = if (output.execCode == 1 || output.executions.any { it.execCode == 1 })
+        submission.totalTime = Duration.between(submission.createdAt, Instant.now()).toMillis()
+        submission.error = output.error
+        submission.status = if (output.execCode == 1 || output.executions.any { it.execCode == 1 })
             ExecutionStatus.FAILED
         else
             ExecutionStatus.COMPLETED
 
-        execution.executions.forEachIndexed { i, it ->
+        submission.executions.forEachIndexed { i, it ->
             val out = output.executions[i]
             it.stdOut = out.stdOut
             it.stdErr = out.stdErr
             it.status = if (out.execCode == 1) ExecutionStatus.FAILED else ExecutionStatus.COMPLETED
         }
 
-        executionRepository.save(execution)
+        submissionRepository.save(submission)
     }
 
     fun execute(language: Language, code: String, executions: List<DockerInput.ExecutionInput>): DockerOutput {
@@ -92,9 +92,8 @@ class ExecutionService(
         return dockerClient.exec(imageName, objectMapper.writeValueAsString(input))
     }
 
-    fun ExecutionRequest.toExecution(now: Instant) = Execution(
-        executionId = UUID.randomUUID().toString(),
-        type = this.type,
+    fun SubmissionRequest.toSubmission(now: Instant) = Submission(
+        submissionId = UUID.randomUUID().toString(),
         code = this.code,
         language = this.language,
         status = ExecutionStatus.NOT_STARTED,
@@ -102,20 +101,18 @@ class ExecutionService(
     ).also { execution ->
         execution.executions.addAll(this.executions.takeIf { it.isNotEmpty() }
             ?.map {
-                ExecutionInputOutput(
-                    executionInputOutputId = UUID.randomUUID().toString(),
-                    execution = execution,
+                Execution(
+                    executionId = UUID.randomUUID().toString(),
+                    submission = execution,
                     status = ExecutionStatus.NOT_STARTED,
-                    input = objectMapper.writeValueAsString(it.input),
-                    args = it.args,
+                    args = it.args?.joinToString(" "),
                     stdIn = it.stdIn,
                 )
             } ?: listOf(
-            ExecutionInputOutput(
-                executionInputOutputId = UUID.randomUUID().toString(),
-                execution = execution,
+            Execution(
+                executionId = UUID.randomUUID().toString(),
+                submission = execution,
                 status = ExecutionStatus.NOT_STARTED,
-                input = null,
                 args = null,
                 stdIn = null,
             )

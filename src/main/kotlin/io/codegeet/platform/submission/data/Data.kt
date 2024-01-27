@@ -1,18 +1,14 @@
-package io.codegeet.platform.execution.data
+package io.codegeet.platform.submission.data
 
 import io.codegeet.platform.config.Language
-import io.codegeet.platform.execution.api.ExecutionStatus
-import io.codegeet.platform.execution.api.ExecutionType
 import jakarta.persistence.*
 import java.time.Instant
 
 @Entity
-@Table(name = "executions")
-data class Execution(
+@Table(name = "submissions")
+data class Submission(
     @Id
-    val executionId: String,
-    @Enumerated(EnumType.STRING)
-    val type: ExecutionType,
+    val submissionId: String,
     @Enumerated(EnumType.STRING)
     val language: Language,
     @Column(columnDefinition = "TEXT")
@@ -24,20 +20,18 @@ data class Execution(
     var totalTime: Long? = null,
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
-    val executions: MutableList<ExecutionInputOutput> = mutableListOf(),
+    val executions: MutableList<Execution> = mutableListOf(),
 )
 
 @Entity
-@Table(name = "executions_input_output")
-data class ExecutionInputOutput(
+@Table(name = "executions")
+data class Execution(
     @Id
-    val executionInputOutputId: String,
+    val executionId: String,
     @ManyToOne(fetch = FetchType.LAZY)
-    val execution: Execution,
+    val submission: Submission,
     @Enumerated(EnumType.STRING)
     var status: ExecutionStatus,
-    val input: String?, // json
-    var result: String? = null,
     val args: String?,
     @Column(columnDefinition = "TEXT")
     val stdIn: String?,
@@ -48,3 +42,7 @@ data class ExecutionInputOutput(
     @Column(columnDefinition = "TEXT")
     var error: String? = null
 )
+
+enum class ExecutionStatus {
+    NOT_STARTED, COMPLETED, FAILED
+}
