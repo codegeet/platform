@@ -1,7 +1,6 @@
 package io.codegeet.platform.docker
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
@@ -16,7 +15,8 @@ import java.util.concurrent.TimeUnit
 @Service
 class DockerService(
     private val dockerClient: DockerClient,
-    private val configuration: DockerConfiguration.DockerContainerConfiguration
+    private val configuration: DockerConfiguration.DockerContainerConfiguration,
+    private val objectMapper: ObjectMapper
 ) {
 
     fun exec(image: String, input: String): ExecutionOutput {
@@ -87,7 +87,7 @@ class DockerService(
     private fun buildExecutionOutput(callback: ContainerCallback): ExecutionOutput {
         val out = callback.getStdOut()
             .takeIf { it.isNotEmpty() }
-            ?.let { jacksonObjectMapper().readValue(it, ExecutionOutput::class.java) }
+            ?.let { objectMapper.readValue(it, ExecutionOutput::class.java) }
             ?: ExecutionOutput(stdOut = "", stdErr = "", error = "No stdout from container.")
 
         val err = callback.getStdErr().ifEmpty { out.stdErr }
@@ -116,15 +116,10 @@ class DockerService(
     }
 
     data class ExecutionOutput(
-        @JsonProperty("std_out")
         val stdOut: String,
-        @JsonProperty("std_err")
         val stdErr: String,
-        @JsonProperty("error")
         val error: String,
-        @JsonProperty("exec_code")
         val execCode: Int? = null,
-        @JsonProperty("exec_time")
-        val execMillis: Long? = null,
+        val execTime: Long? = null,
     )
 }

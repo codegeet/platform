@@ -1,36 +1,43 @@
 package io.codegeet.platform.config
 
-import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.annotation.JsonValue
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.stereotype.Service
 
 @Service
-class LanguageConfiguration {
-    companion object {
-        val settings: Map<String, Settings> by lazy {
-            val objectMapper = jacksonObjectMapper()
+class LanguageConfiguration(private val objectMapper: ObjectMapper) {
 
-            Thread.currentThread().contextClassLoader.getResourceAsStream("languages.json")?.let {
-                val map: Map<String, Settings> = objectMapper.readValue(
-                    it, objectMapper.typeFactory.constructMapType(
-                        Map::class.java,
-                        String::class.java,
-                        Settings::class.java
-                    )
+    val settings: Map<Language, Settings> by lazy {
+        Thread.currentThread().contextClassLoader.getResourceAsStream("languages.json")?.let {
+            val map: Map<Language, Settings> = objectMapper.readValue(
+                it, objectMapper.typeFactory.constructMapType(
+                    Map::class.java,
+                    Language::class.java,
+                    Settings::class.java
                 )
-                map
-            } ?: throw IllegalStateException("Languages settings file not found.")
-        }
+            )
+            map
+        } ?: throw IllegalStateException("Languages settings file not found.")
     }
 
-    fun getSettingsFor(language: String): Settings {
+    fun getSettingsFor(language: Language): Settings {
         return settings[language] ?: throw IllegalArgumentException("Settings for '$language' not found.")
     }
 
     data class Settings(
         val compile: String,
         val exec: String,
-        @JsonProperty("file_name")
         val fileName: String,
     )
+}
+
+enum class Language(private val id: String) {
+    CSHARP("csharp"),
+    JAVA("java"),
+    JS("js"),
+    PYTHON("python"),
+    TS("ts");
+
+    @JsonValue
+    fun getId(): String = id
 }
