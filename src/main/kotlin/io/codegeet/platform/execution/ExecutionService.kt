@@ -3,23 +3,26 @@ package io.codegeet.platform.execution
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.codegeet.platform.config.Language
 import io.codegeet.platform.config.LanguageConfiguration
+import io.codegeet.platform.docker.DockerInput
+import io.codegeet.platform.docker.DockerOutput
 import io.codegeet.platform.docker.DockerService
 import io.codegeet.platform.exceptions.ExecutionNotFoundException
 import io.codegeet.platform.execution.api.ExecutionRequest
 import io.codegeet.platform.execution.api.ExecutionStatus
 import io.codegeet.platform.execution.data.Execution
-import io.codegeet.platform.execution.data.ExecutionRepository
-import io.codegeet.platform.execution.data.ExecutionRun
+import io.codegeet.platform.execution.data.ExecutionInputOutput
+import io.codegeet.platform.execution.data.ExecutionsRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.*
 
 @Service
 class ExecutionService(
-    private val executionRepository: ExecutionRepository,
+    private val executionRepository: ExecutionsRepository,
     private val dockerClient: DockerService,
     private val languageConfiguration: LanguageConfiguration,
     private val objectMapper: ObjectMapper,
@@ -45,52 +48,49 @@ class ExecutionService(
 
     private fun execute(executionId: String) {
         val execution = getExecution(executionId)
+        val executions = execution.executions.map {
+            DockerInput.ExecutionInput(
+                args = it.args?.split(" ").orEmpty(),
+                stdIn = it.stdIn
+            )
+        }
 
-        val output = execute(execution.language, execution.code)
-        val status = if (output.stdErr.isNotEmpty() || output.stdErr.isNotEmpty()) ExecutionStatus.FAILED
-        else ExecutionStatus.COMPLETED
+        val output = execute(execution.language, execution.code, executions)
 
-        execution.totalTime
-        execution.status = status
+        execution.totalTime = Duration.between(execution.createdAt, Instant.now()).toMillis()
+        execution.error = output.error
+        execution.status = if (output.execCode == 1 || output.executions.any { it.execCode == 1 })
+            ExecutionStatus.FAILED
+        else
+            ExecutionStatus.COMPLETED
 
-        execution.runs.forEach {
-            it.stdOut = output.stdOut
-            it.error = output.error
-            it.status = status
+        execution.executions.forEachIndexed { i, it ->
+            val out = output.executions[i]
+            it.stdOut = out.stdOut
+            it.stdErr = out.stdErr
+            it.status = if (out.execCode == 1) ExecutionStatus.FAILED else ExecutionStatus.COMPLETED
         }
 
         executionRepository.save(execution)
     }
 
-    fun execute(language: Language, code: String): DockerService.ExecutionOutput {
+    fun execute(language: Language, code: String, executions: List<DockerInput.ExecutionInput>): DockerOutput {
         val languageSettings = languageConfiguration.getSettingsFor(language)
 
-        val coderunnerInput = CoderunnerInput(
+        val input = DockerInput(
             code = code,
-            args = emptyList(),
             fileName = languageSettings.fileName,
-            instructions = Instructions(
+            instructions = DockerInput.Instructions(
                 compile = languageSettings.compile,
                 exec = languageSettings.exec
-            )
+            ),
+            executions = executions
         )
 
         val imageName = "codegeet/${language.getId()}:latest"
 
-        return dockerClient.exec(imageName, objectMapper.writeValueAsString(coderunnerInput))
+        return dockerClient.exec(imageName, objectMapper.writeValueAsString(input))
     }
-
-    data class CoderunnerInput(
-        val code: String,
-        val args: List<String>?,
-        val fileName: String,
-        val instructions: Instructions
-    )
-
-    data class Instructions(
-        val compile: String,
-        val exec: String,
-    )
 
     fun ExecutionRequest.toExecution(now: Instant) = Execution(
         executionId = UUID.randomUUID().toString(),
@@ -100,10 +100,10 @@ class ExecutionService(
         status = ExecutionStatus.NOT_STARTED,
         createdAt = now
     ).also { execution ->
-        execution.runs.addAll(this.runs.takeIf { it.isNotEmpty() }
+        execution.executions.addAll(this.executions.takeIf { it.isNotEmpty() }
             ?.map {
-                ExecutionRun(
-                    executionRunId = UUID.randomUUID().toString(),
+                ExecutionInputOutput(
+                    executionInputOutputId = UUID.randomUUID().toString(),
                     execution = execution,
                     status = ExecutionStatus.NOT_STARTED,
                     input = objectMapper.writeValueAsString(it.input),
@@ -111,8 +111,8 @@ class ExecutionService(
                     stdIn = it.stdIn,
                 )
             } ?: listOf(
-            ExecutionRun(
-                executionRunId = UUID.randomUUID().toString(),
+            ExecutionInputOutput(
+                executionInputOutputId = UUID.randomUUID().toString(),
                 execution = execution,
                 status = ExecutionStatus.NOT_STARTED,
                 input = null,

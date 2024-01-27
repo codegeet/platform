@@ -2,10 +2,13 @@ package io.codegeet.platform.execution.api
 
 data class ExecutionResponse(
     val executionId: String,
-    val runs: List<RunOutput>?
+    val status: ExecutionStatus,
+    val time: Long?,
+    val error: String?,
+    val executions: List<ExecutionsOutput>?
 )
 
-data class RunOutput(
+data class ExecutionsOutput(
     val status: ExecutionStatus,
     val output: Output?,
 )

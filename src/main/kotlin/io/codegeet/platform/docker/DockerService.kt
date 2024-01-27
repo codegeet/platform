@@ -19,7 +19,7 @@ class DockerService(
     private val objectMapper: ObjectMapper
 ) {
 
-    fun exec(image: String, input: String): ExecutionOutput {
+    fun exec(image: String, input: String): DockerOutput {
         val containerId = createContainer(image)
 
         val callback = ContainerCallback()
@@ -84,15 +84,13 @@ class DockerService(
             .exec().id
     }
 
-    private fun buildExecutionOutput(callback: ContainerCallback): ExecutionOutput {
-        val out = callback.getStdOut()
+    private fun buildExecutionOutput(callback: ContainerCallback): DockerOutput = try {
+        callback.getStdOut()
             .takeIf { it.isNotEmpty() }
-            ?.let { objectMapper.readValue(it, ExecutionOutput::class.java) }
-            ?: ExecutionOutput(stdOut = "", stdErr = "", error = "No stdout from container.")
-
-        val err = callback.getStdErr().ifEmpty { out.stdErr }
-
-        return ExecutionOutput(stdOut = out.stdOut, stdErr = err, error = out.error)
+            ?.let { objectMapper.readValue(it, DockerOutput::class.java) }
+            ?: DockerOutput(execCode = 1, executions = emptyList(), error = "No stdout from container.")
+    } catch (e: Exception) {
+        DockerOutput(execCode = 1, executions = emptyList(), error = "Failed to parse container output.")
     }
 
     private class ContainerCallback : ResultCallback.Adapter<Frame>() {
@@ -115,11 +113,4 @@ class DockerService(
         fun getStdErr(): String = stdErrBuilder.toString()
     }
 
-    data class ExecutionOutput(
-        val stdOut: String,
-        val stdErr: String,
-        val error: String,
-        val execCode: Int? = null,
-        val execTime: Long? = null,
-    )
 }

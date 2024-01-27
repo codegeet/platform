@@ -8,7 +8,7 @@ data class ExecutionRequest(
     val code: String,
     val language: Language,
     val function: Function?,
-    val runs: List<RunInput> = emptyList(),
+    val executions: List<ExecutionInput> = emptyList(),
     val sync: Boolean? = false,
 )
 
@@ -23,7 +23,7 @@ data class FunctionInput(
     val name: String
 )
 
-data class RunInput(
+data class ExecutionInput(
     val input: Map<String, String>?,
     val stdIn: String?,
     val args:String?

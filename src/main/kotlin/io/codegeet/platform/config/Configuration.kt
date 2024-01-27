@@ -1,5 +1,6 @@
 package io.codegeet.platform.config
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -19,6 +20,7 @@ class Configuration(private val environment: Environment) {
     @Bean
     fun objectMapperBuilder(): Jackson2ObjectMapperBuilder = Jackson2ObjectMapperBuilder.json()
         .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+        .serializationInclusion(JsonInclude.Include.NON_NULL)
         .modulesToInstall(KotlinModule.Builder().build())
 
     @Bean

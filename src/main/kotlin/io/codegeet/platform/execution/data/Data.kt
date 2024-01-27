@@ -20,17 +20,18 @@ data class Execution(
     val createdAt: Instant,
     @Enumerated(EnumType.STRING)
     var status: ExecutionStatus,
+    var error: String? = null,
     var totalTime: Long? = null,
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true)
-    val runs: MutableList<ExecutionRun> = mutableListOf(),
+    val executions: MutableList<ExecutionInputOutput> = mutableListOf(),
 )
 
 @Entity
-@Table(name = "execution_runs")
-data class ExecutionRun(
+@Table(name = "executions_input_output")
+data class ExecutionInputOutput(
     @Id
-    val executionRunId: String,
+    val executionInputOutputId: String,
     @ManyToOne(fetch = FetchType.LAZY)
     val execution: Execution,
     @Enumerated(EnumType.STRING)

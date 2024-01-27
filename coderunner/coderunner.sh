@@ -1,62 +1,97 @@
 #!/bin/bash
 
-INPUT=""
-while IFS= read -r LINE; do
-    if [[ -z $LINE ]]; then
-        break
-    fi
-    INPUT="${INPUT}${LINE}"$'\n'
-done
+read_input() {
+    INPUT=""
+    while IFS= read -r LINE; do
+        if [[ -z $LINE ]]; then
+            break
+        fi
+        INPUT="${INPUT}${LINE}"$'\n'
+    done
+}
+
+compile_code() {
+    eval $COMPILE_CMD 2>$COMPILE_LOG_FILE || {
+        COMPILE_ERROR_MSG=$(<$COMPILE_LOG_FILE)
+        GLOBAL_EXEC_CODE=1
+        return 1
+    }
+}
+
+execute_code() {
+    local args=$1
+    local std_in=$2
+
+    {
+        STD_OUT=$(echo "$std_in" | $EXEC_CMD $args 2>$EXECUTE_LOG_FILE);
+    } || {
+        STD_ERR=$(<$EXECUTE_LOG_FILE)
+        LOCAL_EXEC_CODE=1
+        GLOBAL_EXEC_CODE=1
+    }
+
+    jq -n \
+        --arg std_out "$STD_OUT" \
+        --arg std_err "$STD_ERR" \
+        --argjson exec_code $LOCAL_EXEC_CODE \
+        '{
+            "std_out": $std_out,
+            "std_err": $std_err,
+            "exec_code": $exec_code
+        }'
+}
+
+read_input
 
 CODE=$(jq -r '.code' <<< "$INPUT")
-ARGS=$(jq -r '.args[]' <<< "$INPUT")
 FILE_NAME=$(jq -r '.file_name' <<< "$INPUT")
 COMPILE_CMD=$(jq -r '.instructions.compile' <<< "$INPUT")
 EXEC_CMD=$(jq -r '.instructions.exec' <<< "$INPUT")
 
 CURRENT_DIR=$(pwd)
-
-COMPILE_LOG_FILE="$CURRENT_DIR/compile.txt"
+COMPILE_LOG_FILE="$CURRENT_DIR/compile.log"
 EXECUTE_LOG_FILE="$CURRENT_DIR/execute.log"
+GLOBAL_EXEC_CODE=0
+COMPILE_ERROR_MSG=""
 
 # Save the code to a file
 echo "$CODE" > "$FILE_NAME"
 
-STD_OUT=""
-STD_ERR=""
-ERROR_MSG=""
-EXEC_CODE=0
-
 # Compile the code
-eval $COMPILE_CMD 2>$COMPILE_LOG_FILE || {
-    ERROR_MSG=$(<$COMPILE_LOG_FILE)
-    EXEC_CODE=1
-}
+compile_code
 
-# Execute the code and capture the output and error
-EXEC_TIME=0
-if [ $EXEC_CODE -eq 0 ]; then
-    START_TIME=$(date +%s%3N)
-
-    { STD_OUT=$($EXEC_CMD "$ARGS" 2>$EXECUTE_LOG_FILE); } || {
-        STD_ERR=$(<$EXECUTE_LOG_FILE)
-        EXEC_CODE=1
-    }
-
-    END_TIME=$(date +%s%3N)
-    EXEC_TIME=$((END_TIME - START_TIME))
+# If compilation fails, output the error in JSON and exit
+if [[ $GLOBAL_EXEC_CODE -ne 0 ]]; then
+    jq -n \
+        --arg error "$COMPILE_ERROR_MSG" \
+        --argjson exec_code $GLOBAL_EXEC_CODE \
+        '{
+            "executions": [],
+            "error": $error,
+            "exec_code": $exec_code
+        }'
+    exit 1
 fi
 
+# Execute the code and gather results
+EXECUTION_RESULTS=()
+executions_length=$(jq '.executions | length' <<< "$INPUT")
+for (( i=0; i<"$executions_length"; i++ )); do
+    args=$(jq -r ".executions[$i].args | @sh" <<< "$INPUT")
+    std_in=$(jq -r ".executions[$i].std_in" <<< "$INPUT")
+    LOCAL_EXEC_CODE=0
+
+    result=$(execute_code "$args" "$std_in")
+
+    EXECUTION_RESULTS+=("$result")
+done
+
 jq -n \
-    --arg std_out "$STD_OUT" \
-    --arg std_err "$STD_ERR" \
-    --arg error "$ERROR_MSG" \
-    --argjson exec_code $EXEC_CODE \
-    --argjson exec_time $EXEC_TIME \
+    --argjson results "$(jq -s . <<< "${EXECUTION_RESULTS[@]}")" \
+    --arg error "" \
+    --argjson exec_code $GLOBAL_EXEC_CODE \
     '{
-        "std_out": $std_out,
-        "std_err": $std_err,
+        "executions": $results,
         "error": $error,
-        "exec_code": $exec_code,
-        "exec_time": $exec_time
+        "exec_code": $exec_code
     }'

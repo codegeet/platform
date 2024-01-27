@@ -25,8 +25,11 @@ class ExecutionController(
 
     private fun Execution.toResponse() = ExecutionResponse(
         executionId = this.executionId,
-        runs = this.runs.map {
-            RunOutput(
+        status = this.status,
+        error = this.error,
+        time = this.totalTime,
+        executions = this.executions.map {
+            ExecutionsOutput(
                 status = it.status,
                 output = if (it.status == ExecutionStatus.NOT_STARTED) null else Output(
                     result = it.result,
@@ -37,3 +40,7 @@ class ExecutionController(
         }
     )
 }
+
+
+
+
