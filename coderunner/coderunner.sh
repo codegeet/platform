@@ -23,7 +23,7 @@ execute_code() {
     local std_in=$2
 
     {
-        STD_OUT=$(echo "$std_in" | $EXEC_CMD $args 2>$EXECUTE_LOG_FILE);
+        STD_OUT=$(echo "$std_in" | eval $EXEC_CMD $args 2>$EXECUTE_LOG_FILE);
     } || {
         STD_ERR=$(<$EXECUTE_LOG_FILE)
         LOCAL_EXEC_CODE=1
@@ -45,7 +45,7 @@ read_input
 
 CODE=$(jq -r '.code' <<< "$INPUT")
 FILE_NAME=$(jq -r '.file_name' <<< "$INPUT")
-COMPILE_CMD=$(jq -r '.instructions.compile' <<< "$INPUT")
+COMPILE_CMD=$(jq -r '.instructions.compile // ""' <<< "$INPUT")
 EXEC_CMD=$(jq -r '.instructions.exec' <<< "$INPUT")
 
 CURRENT_DIR=$(pwd)
@@ -74,11 +74,13 @@ if [[ $GLOBAL_EXEC_CODE -ne 0 ]]; then
 fi
 
 # Execute the code and gather results
+EXECUTIONS=$(jq -r '.executions // [{"args": [], "std_in": ""}]' <<< "$INPUT")
+
 EXECUTION_RESULTS=()
-executions_length=$(jq '.executions | length' <<< "$INPUT")
-for (( i=0; i<"$executions_length"; i++ )); do
+executions_length=$(jq 'length' <<< "$EXECUTIONS")
+for (( i=0; i < "$executions_length"; i++ )); do
     args=$(jq -r ".executions[$i].args | @sh" <<< "$INPUT")
-    std_in=$(jq -r ".executions[$i].std_in" <<< "$INPUT")
+    std_in=$(jq -r ".[$i].std_in" <<< "$EXECUTIONS")
     LOCAL_EXEC_CODE=0
 
     result=$(execute_code "$args" "$std_in")
