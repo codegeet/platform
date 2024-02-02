@@ -1,21 +1,19 @@
-# coderunner
+# Code Runner
 
 ## Overview
 
-**Coderunner** is a command-line tool that runs inside a Docker container. 
-It's used for compiling and running code. 
-When the container starts, **coderunner** reads input from `stdin` in JSON format. 
-It compiles and executes the code, and outputs the results to `stdout`, also in JSON format.
+**Coderunner** is a command-line tool that runs inside every Codegeet Docker container 
+and used for compiling and running code. 
+When the container starts, **coderunner** reads input from `stdin` in JSON format, 
+compiles and executes the code, and outputs the results to `stdout`, also in JSON format.
 
 ### Coderunner Input
 ```json
 {
-  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello, \" + args[0] + \"!\"); }}",
-  "args": ["you"],
-  "file_name": "Main.java",
+  "code": "print(f\"Hello, CodeGeet!\")",
+  "file_name": "app.py",
   "instructions": {
-    "compile": "javac Main.java",
-    "exec": "java Main"
+    "exec": "python3 app.py"
   }
 }
 ```
@@ -23,20 +21,24 @@ It compiles and executes the code, and outputs the results to `stdout`, also in 
 ### Coderunner Output
 ```json
 {
-  "std_out": "Hello, you!",
-  "std_err": "",
+  "executions": [
+    {
+      "std_out": "Hello, CodeGeet!",
+      "std_err": "",
+      "exec_code": 0
+    }
+  ],
   "error": "",
-  "exec_code": 0,
-  "exec_time": 35
+  "exec_code": 0
 }
 ```
 
 ## Play locally (Linux and MacOS)
-To use **coderunner** locally and run code snippets on your local machine, 
-you also need to have the necessary tools installed for your programming language, 
+To execute code snippets with **coderunner** on your local machine, 
+you need to have the tools installed for your programming language, 
 such as JDK for Java, Python interpreter for Python, or others as required.  
 To work with JSON **coderunner** uses `jq`, a lightweight and powerful command-line JSON processor.
-You can install `jq` using the package manager.
+You need to install `jq` using the package manager.
 #### MacOS:
 ```bash
 brew install jq
@@ -45,19 +47,103 @@ brew install jq
 ```bash
 sudo apt-get install jq
 ```
-
-#### Execute:
+Now you can try to execute some code (please pay attention if you have `python` or `python3`):
 ```bash
-echo '{                            
-  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello, \" + args[0] + \"!\"); }}",
-  "args": ["you"],
+echo '{
+  "code": "print(f\"Hello, CodeGeet!\")",
+  "file_name": "app.py",
+  "instructions": {
+    "exec": "python3 app.py"
+  }
+}' | ./coderunner.sh
+```
+#### Result:
+```json
+{
+  "executions": [
+    {
+      "std_out": "Hello, CodeGeet!",
+      ...
+    }
+  ],
+  ...
+}
+```
+With **coderunner** your code can read from `std_in` and use command line `args`:
+
+#### std_in:
+```bash
+echo '{
+  "code": "print(f\"Hello, {input()}!\")",
+  "file_name": "app.py",
+  "instructions": {
+    "exec": "python3 app.py"
+  },
+  "executions": [
+    {
+      "std_in": "CodeGeet"
+    }
+  ]
+}' | ./coderunner.sh
+```
+#### args:
+```bash
+echo '{
+  "code": "import sys; print(f\"Hello, {sys.argv[1]}!\")",
+  "file_name": "app.py",
+  "instructions": {
+    "exec": "python3 app.py"
+  },
+  "executions": [
+    {
+      "args": ["CodeGeet"]
+    }
+  ]
+}' | ./coderunner.sh
+````
+
+### Compilation and multiple executions
+When code compilation is needed, **coderunner** will compile the code with the provided 'compile' instruction 
+(e.g., `compile: javac Main.java`) and execute it with 'exec' (e.g., `exec: java Main`).
+Additionally, you can have multiple executions of compiled code:
+#### Example:
+```bash
+echo '{
+  "code": "class Main { public static void main(String[] args) { System.out.print(args[0]); }}",
   "file_name": "Main.java",
   "instructions": {
     "compile": "javac Main.java",
     "exec": "java Main"
-  }
+  },
+  "executions": [
+    {
+      "args": "one"
+    },
+    {
+      "args": "another"
+    }
+  ]
 }' | ./coderunner.sh
-```
+````
+#### Output
+```json:
+{
+  "executions": [
+    {
+      "std_out": "one",
+      "std_err": "",
+      "exec_code": 0
+    },
+    {
+      "std_out": "another",
+      "std_err": "",
+      "exec_code": 0
+    }
+  ],
+  "error": "",
+  "exec_code": 0
+}
+````
 
 ### Author
 
