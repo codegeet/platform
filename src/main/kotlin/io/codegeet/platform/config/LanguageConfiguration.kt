@@ -36,7 +36,8 @@ enum class Language(private val id: String) {
     JAVA("java"),
     JS("js"),
     PYTHON("python"),
-    TS("ts");
+    TS("ts"),
+    KOTLIN("kotlin");
 
     @JsonValue
     fun getId(): String = id
