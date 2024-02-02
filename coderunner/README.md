@@ -62,11 +62,9 @@ echo '{
 {
   "executions": [
     {
-      "std_out": "Hello, CodeGeet!",
-      ...
+      "std_out": "Hello, CodeGeet!"
     }
-  ],
-  ...
+  ]
 }
 ```
 With **coderunner** your code can read from `std_in` and use command line `args`:
