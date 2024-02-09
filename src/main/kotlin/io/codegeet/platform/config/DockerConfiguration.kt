@@ -44,7 +44,7 @@ class DockerConfiguration(private val environment: Environment) {
 
     @ConfigurationProperties(prefix = "docker.container")
     data class DockerContainerConfiguration(
-            var memory: Long = 128000000,
+            var memory: Long = 768000000,
             var cpuPeriod: Long = 100000,
             var cpuQuota: Long = 50000,
             var timeoutSeconds: Long = 15,
