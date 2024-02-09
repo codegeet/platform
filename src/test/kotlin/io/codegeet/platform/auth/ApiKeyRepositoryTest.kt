@@ -1,4 +1,4 @@
-package io.codegeet.sandbox.auth
+package io.codegeet.platform.auth
 
 import io.codegeet.platform.auth.ApiKey
 import io.codegeet.platform.auth.ApiKeyRepository
