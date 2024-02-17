@@ -6,23 +6,26 @@ import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.StreamType
-import io.codegeet.platform.config.DockerConfiguration
+import io.codegeet.platform.config.DockerConfiguration.*
+import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
+import java.nio.channels.ClosedByInterruptException
 import java.util.concurrent.TimeUnit
 
 @Service
 class DockerService(
     private val dockerClient: DockerClient,
-    private val configuration: DockerConfiguration.DockerContainerConfiguration,
+    private val config: DockerContainerConfiguration,
     private val objectMapper: ObjectMapper
 ) {
+    private val log = LogFactory.getLog(javaClass)
 
     fun exec(image: String, input: String): DockerOutput {
         val containerId = createContainer(image)
 
-        val callback = ContainerCallback()
+        val callback = ContainerCallback(containerId)
 
         val outputStream = PipedOutputStream()
         val inputStream = PipedInputStream(outputStream)
@@ -34,7 +37,7 @@ class DockerService(
         outputStream.flush()
         outputStream.close()
 
-        attachContainerCallback.awaitCompletion(15, TimeUnit.SECONDS)
+        attachContainerCallback.awaitCompletion(config.timeoutSeconds, TimeUnit.SECONDS)
         attachContainerCallback.close()
 
         stopContainer(containerId)
@@ -68,45 +71,88 @@ class DockerService(
         try {
             dockerClient.stopContainerCmd(containerId).exec()
         } catch (e: Exception) {
-            // do nothing
+            log.debug("Failed to stop container: $containerId")
         }
     }
 
     private fun createContainer(image: String): String {
         val hostConfig = HostConfig.newHostConfig()
-            .withMemory(configuration.memory)
+            .withMemory(config.memory)
             .withNetworkMode("none")
 
         return dockerClient.createContainerCmd(image)
             .withStdinOpen(true)
             .withStdInOnce(true)
             .withHostConfig(hostConfig)
-            .exec().id
+            .exec()
+            .also {
+                it.warnings.forEach { log.warn(it) }
+            }.id
     }
 
     private fun buildExecutionOutput(callback: ContainerCallback): DockerOutput = try {
         callback.getStdOut()
             .takeIf { it.isNotEmpty() }
             ?.let { objectMapper.readValue(it, DockerOutput::class.java) }
-            ?: DockerOutput(execCode = 1, executions = emptyList(), error = "No stdout from container.")
+            ?: DockerOutput(
+                execCode = 1,
+                executions = emptyList(),
+                error = callback.getStdErr().takeIf { it.isNotEmpty() } ?: "No stdout from container")
     } catch (e: Exception) {
-        DockerOutput(execCode = 1, executions = emptyList(), error = "Failed to parse container output.")
+        "Failed to parse container output: ${callback.getStdOut()}".let {
+            log.error(it)
+            DockerOutput(
+                execCode = 1,
+                executions = emptyList(),
+                error = "Failed to parse container output: ${callback.getStdOut()}"
+            )
+        }
+
     }
 
-    private class ContainerCallback : ResultCallback.Adapter<Frame>() {
+    private class ContainerCallback(val containerId: String) : ResultCallback.Adapter<Frame>() {
+        private val log = LogFactory.getLog(javaClass)
+
         private val stdOutBuilder = StringBuilder()
         private val stdErrBuilder = StringBuilder()
 
         override fun onNext(frame: Frame) {
             when (frame.streamType) {
-                StreamType.STDOUT, StreamType.RAW -> stdOutBuilder.append(String(frame.payload))
-                StreamType.STDERR -> stdErrBuilder.append(String(frame.payload))
+                StreamType.STDOUT, StreamType.RAW -> {
+                    String(frame.payload).let {
+                        log.debug("STDOUT $containerId: $it")
+                        stdOutBuilder.append(it)
+                    }
+                }
+
+                StreamType.STDERR -> {
+                    String(frame.payload).let {
+                        log.debug("STDERR $containerId: $it")
+                        stdErrBuilder.append(it)
+                    }
+                }
+
+                StreamType.STDIN -> {
+                    String(frame.payload).let {
+                        log.debug("STDIN $containerId: $it")
+                    }
+                }
+
                 else -> {}
             }
         }
 
-        override fun onError(throwable: Throwable?) {
-            stdErrBuilder.append("Error during container execution.")
+        override fun onError(throwable: Throwable) {
+            if (throwable is ClosedByInterruptException)
+                "Container may have been stopped by timeout".let {
+                    log.debug(it)
+                    stdErrBuilder.append(it)
+                }
+            else
+                "Error during container execution: ${throwable.message ?: "unknown"}".let {
+                    log.debug(it)
+                    stdErrBuilder.append(it)
+                }
         }
 
         fun getStdOut(): String = stdOutBuilder.toString()

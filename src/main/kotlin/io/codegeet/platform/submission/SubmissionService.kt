@@ -72,7 +72,7 @@ class SubmissionService(
                 submission.stdErr = out.stdErr
                 submission.status = if (out.execCode == 1) ExecutionStatus.FAILED else ExecutionStatus.COMPLETED
             } ?: let {
-                submission.stdErr = "Not found in output."
+                submission.stdErr = "No output found."
                 submission.status = ExecutionStatus.FAILED
             }
         }
