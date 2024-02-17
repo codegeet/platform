@@ -16,6 +16,7 @@ data class Submission(
     val createdAt: Instant,
     @Enumerated(EnumType.STRING)
     var status: ExecutionStatus,
+    @Column(columnDefinition = "TEXT")
     var error: String? = null,
     var totalTime: Long? = null,
 
@@ -28,8 +29,6 @@ data class Submission(
 data class Execution(
     @Id
     val executionId: String,
-    @ManyToOne(fetch = FetchType.LAZY)
-    val submission: Submission,
     @Enumerated(EnumType.STRING)
     var status: ExecutionStatus,
     val args: String?,
@@ -40,7 +39,10 @@ data class Execution(
     @Column(columnDefinition = "TEXT")
     var stdErr: String? = null,
     @Column(columnDefinition = "TEXT")
-    var error: String? = null
+    var error: String? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    val submission: Submission,
 )
 
 enum class ExecutionStatus {
