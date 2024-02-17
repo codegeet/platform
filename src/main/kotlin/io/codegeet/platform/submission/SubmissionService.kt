@@ -6,7 +6,7 @@ import io.codegeet.platform.config.LanguageConfiguration
 import io.codegeet.platform.docker.DockerInput
 import io.codegeet.platform.docker.DockerOutput
 import io.codegeet.platform.docker.DockerService
-import io.codegeet.platform.exceptions.ExecutionNotFoundException
+import io.codegeet.platform.submission.exceptions.SubmissionNotFoundException
 import io.codegeet.platform.submission.api.SubmissionRequest
 import io.codegeet.platform.submission.data.Submission
 import io.codegeet.platform.submission.data.Execution
@@ -44,7 +44,7 @@ class SubmissionService(
     }
 
     fun getSubmission(submissionId: String): Submission = submissionRepository.findByIdOrNull(submissionId)
-        ?: throw ExecutionNotFoundException("Submission '$submissionId' not found.")
+        ?: throw SubmissionNotFoundException("Submission '$submissionId' not found.")
 
     private fun execute(submissionId: String) {
         val submission = getSubmission(submissionId)

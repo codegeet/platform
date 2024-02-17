@@ -1,3 +1,3 @@
-package io.codegeet.platform.exceptions
+package io.codegeet.platform.config.exceptions
 
 class MissingDefaultApiKeyException(message: String) : RuntimeException(message)
