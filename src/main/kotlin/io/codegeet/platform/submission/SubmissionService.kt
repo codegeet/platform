@@ -64,11 +64,17 @@ class SubmissionService(
         else
             ExecutionStatus.COMPLETED
 
-        submission.executions.forEachIndexed { i, it ->
-            val out = output.executions[i]
-            it.stdOut = out.stdOut
-            it.stdErr = out.stdErr
-            it.status = if (out.execCode == 1) ExecutionStatus.FAILED else ExecutionStatus.COMPLETED
+        submission.executions.forEachIndexed { i, submission ->
+            val out = output.executions.getOrNull(i)
+
+            out?.let { out ->
+                submission.stdOut = out.stdOut
+                submission.stdErr = out.stdErr
+                submission.status = if (out.execCode == 1) ExecutionStatus.FAILED else ExecutionStatus.COMPLETED
+            } ?: let {
+                submission.stdErr = "Not found in output."
+                submission.status = ExecutionStatus.FAILED
+            }
         }
 
         submissionRepository.save(submission)
