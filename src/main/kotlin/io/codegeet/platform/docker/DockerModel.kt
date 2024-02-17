@@ -18,7 +18,7 @@ data class DockerInput(
 }
 
 data class DockerOutput(
-    val executions: List<ExecutionOutput>,
+    val executions: List<ExecutionOutput> = emptyList(),
     val error: String,
     val execCode: Int,
 ) {

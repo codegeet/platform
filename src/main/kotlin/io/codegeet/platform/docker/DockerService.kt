@@ -3,10 +3,11 @@ package io.codegeet.platform.docker
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
+import com.github.dockerjava.api.exception.DockerException
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.StreamType
-import io.codegeet.platform.config.DockerConfiguration.*
+import io.codegeet.platform.config.DockerConfiguration.DockerContainerConfiguration
 import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
 import java.io.PipedInputStream
@@ -23,27 +24,33 @@ class DockerService(
     private val log = LogFactory.getLog(javaClass)
 
     fun exec(image: String, input: String): DockerOutput {
-        val containerId = createContainer(image)
+        return try {
+            val containerId = createContainer(image)
 
-        val callback = ContainerCallback(containerId)
+            val callback = ContainerCallback(containerId)
 
-        val outputStream = PipedOutputStream()
-        val inputStream = PipedInputStream(outputStream)
+            val outputStream = PipedOutputStream()
+            val inputStream = PipedInputStream(outputStream)
 
-        val attachContainerCallback = attachContainer(containerId, inputStream, callback)
-        startContainer(containerId)
+            val attachContainerCallback = attachContainer(containerId, inputStream, callback)
+            startContainer(containerId)
 
-        outputStream.write("$input\n\n".toByteArray())
-        outputStream.flush()
-        outputStream.close()
+            outputStream.write("$input\n\n".toByteArray())
+            outputStream.flush()
+            outputStream.close()
 
-        attachContainerCallback.awaitCompletion(config.timeoutSeconds, TimeUnit.SECONDS)
-        attachContainerCallback.close()
+            attachContainerCallback.awaitCompletion(config.timeoutSeconds, TimeUnit.SECONDS)
+            attachContainerCallback.close()
 
-        stopContainer(containerId)
-        removeContainer(containerId)
+            stopContainer(containerId)
+            removeContainer(containerId)
 
-        return buildExecutionOutput(callback)
+            buildExecutionOutput(callback)
+        } catch (e: DockerException) {
+            DockerOutput(execCode = 1, error = e.message ?: "Docker failure")
+        } catch (e: Exception) {
+            DockerOutput(execCode = 1, error = e.message ?: "Docker failure")
+        }
     }
 
     private fun attachContainer(
