@@ -27,20 +27,31 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
 
-    - name: Upload artifact
+    - name: Upload Platform artifact
       uses: actions/upload-artifact@v3
       with:
         name: platform-artifacts
         path: target/platform-0.1.0-SNAPSHOT.jar
+        
+    - name: Upload Coderunner artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: coderunner-script
+        path: coderunner/coderunner.sh
 
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact
+      - name: Download Platform artifact
         uses: actions/download-artifact@v3
         with:
           name: platform-artifacts
+          
+      - name: Download Coderunner artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: coderunner-script
 
       - name: Create Release
         id: create_release
@@ -53,8 +64,7 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Release Asset
-        id: upload-release-asset
+      - name: Upload Jar Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,3 +73,13 @@ jobs:
           asset_path: ./platform-0.1.0-SNAPSHOT.jar
           asset_name: platform-0.1.0-SNAPSHOT.jar
           asset_content_type: application/java-archive
+
+      - name: Upload Coderunner Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./coderunner.sh
+          asset_name: coderunner.sh
+          asset_content_type: text/x-sh
