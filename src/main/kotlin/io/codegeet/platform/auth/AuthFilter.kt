@@ -10,7 +10,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 import kotlin.jvm.optionals.getOrNull
 
 @Component
-class ApiKeyAuthFilter(private val apiKeyRepository: ApiKeyRepository) : OncePerRequestFilter() {
+class AuthFilter(private val apiKeyRepository: ApiKeyRepository) : OncePerRequestFilter() {
 
     @Value("\${app.auth.enabled:true}")
     private lateinit var enabled: String
