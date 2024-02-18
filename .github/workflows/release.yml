@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Java CI with Maven
+name: Release 0.1.0-SNAPSHOT
 
 on:
   workflow_dispatch:
@@ -49,7 +49,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: 0.1.0-SNAPSHOT
-          release_name: Release 0.1.0-SNAPSHOT ${{ github.sha }}
+          release_name: Release 0.1.0-SNAPSHOT
           draft: false
           prerelease: false
 
@@ -60,6 +60,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./platform-artifacts/*.jar
+          asset_path: ./platform-artifacts/platform.jar
           asset_name: platform.jar
           asset_content_type: application/java-archive
