@@ -1,5 +1,3 @@
-# CodeGeet
-Here we build open-source online code execution system.
 
 # CodeGeet 
 
