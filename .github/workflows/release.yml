@@ -60,6 +60,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./platform-artifacts/platform.jar
+          asset_path: ./platform-artifacts/platform-0.1.0-SNAPSHOT.jar
           asset_name: platform.jar
           asset_content_type: application/java-archive
