@@ -8,13 +8,12 @@ import io.codegeet.sandbox.coderunner.model.ExecutionResult.InvocationResult
 import io.codegeet.sandbox.coderunner.model.ExecutionStatus
 import io.codegeet.sandbox.coderunner.model.InvocationStatus
 import java.io.File
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 
-class Runner {
+class Runner(private val stats: Statistics) {
 
     companion object {
         const val DEFAULT_INVOCATION_TIMEOUT_MILLIS: Long = 5_000
@@ -72,31 +71,33 @@ class Runner {
 
         directory
     } catch (e: Exception) {
-        throw InternalError("Something went wrong during the preparation", e)
+        throw Exception("Something went wrong during the preparation: ${e.message}", e)
     }
 
-    private fun compile(command: String, directory: String): ExecutionResult.CompilationDetails {
+    private fun compile(command: String, directory: String): ExecutionResult.CompilationDetails? {
         try {
-            val processBuilder = ProcessBuilder(buildStatisticsCall() + command.split(" "))
+            val processBuilder = ProcessBuilder(stats.buildStatisticsCall() + command.split(" "))
                 .directory(File(directory))
 
             val startTime = System.nanoTime()
 
             val process = processBuilder.start()
 
-            val code = process.waitFor()
+            process.waitFor()
             val stdErr = process.errorStream.readAsText()
             val stdOut = process.inputStream.readAsText()
 
-            if (code != 0) {
-                throw CompilationException(cleanStatistics(stdErr) + stdOut)
+            if (process.exitValue() != 0) {
+                throw CompilationException(stats.cleanStatistics(stdErr).takeIf { it.isNotEmpty() } ?: stdOut)
             }
 
-            return ExecutionResult.CompilationDetails(
+            return if (stats.isEnabled()) ExecutionResult.CompilationDetails(
                 duration = (System.nanoTime() - startTime) / 1_000_000,
-                memory = getStatistics(stdErr)
-            )
+                memory = stats.getStatistics(stdErr)
+            ) else null
 
+        } catch (e: CompilationException) {
+            throw e
         } catch (e: Exception) {
             throw Exception("Compilation failed: ${e.message}", e)
         }
@@ -107,7 +108,7 @@ class Runner {
         invocation: ExecutionRequest.InvocationDetails,
         directory: String
     ): InvocationResult {
-        val command = buildStatisticsCall() + command.split(" ") + invocation.arguments
+        val command = stats.buildStatisticsCall() + command.split(" ") + invocation.arguments
         val processBuilder = ProcessBuilder(command).directory(File(directory))
 
         val startTime = System.nanoTime()
@@ -125,12 +126,13 @@ class Runner {
 
         return InvocationResult(
             status = if (process.exitValue() == 0) InvocationStatus.SUCCESS else InvocationStatus.INVOCATION_ERROR,
-            details = ExecutionResult.InvocationDetails(
-                duration = (System.nanoTime() - startTime) / 1_000_000,
-                memory = getStatistics(errorStream),
-            ),
+            details = if (stats.isEnabled())
+                ExecutionResult.InvocationDetails(
+                    duration = (System.nanoTime() - startTime) / 1_000_000,
+                    memory = stats.getStatistics(errorStream),
+                ) else null,
             stdOut = inputStream.takeIf { it.isNotEmpty() },
-            stdErr = cleanStatistics(errorStream).takeIf { it.isNotEmpty() },
+            stdErr = stats.cleanStatistics(errorStream).takeIf { it.isNotEmpty() },
         )
     }
 
@@ -169,36 +171,4 @@ class Runner {
         )
     }
 
-    private fun isCliInstalled(name: String): String? {
-        return try {
-            ProcessBuilder(listOf(name, "--h")).start().waitFor()
-            name
-        } catch (e: java.lang.Exception) {
-            null
-        }
-    }
-
-    private fun buildStatisticsCall(): List<String> =
-        isCliInstalled(
-            if (System.getProperty("os.name").lowercase().contains("mac")) "gtime" else "/usr/bin/time"
-        )?.let {
-            listOf(it, "-f", "[%M]")
-        }.orEmpty()
-
-    private fun cleanStatistics(input: String): String {
-        val regex = "\\[(\\d+)\\]\\n?$".toRegex()
-
-        return regex.find(input)?.let {
-            input.removeRange(it.range)
-        } ?: input
-    }
-
-    private fun getStatistics(input: String): Long? {
-        val regex = "\\[(\\d+)\\]\\n?$".toRegex()
-
-        return regex.find(input)
-            ?.groups?.get(1)
-            ?.value
-            ?.toLongOrNull()
-    }
 }

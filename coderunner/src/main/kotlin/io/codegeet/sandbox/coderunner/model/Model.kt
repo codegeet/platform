@@ -5,6 +5,7 @@ data class ExecutionRequest(
     val fileName: String,
     val commands: ExecutionCommands,
     val invocations: List<InvocationDetails> = listOf(InvocationDetails()),
+    val stats: Boolean? = false
 ) {
     data class ExecutionCommands(
         val compilation: String? = null,

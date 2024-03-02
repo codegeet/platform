@@ -42,5 +42,5 @@ class Application(private val runner: Runner) {
 }
 
 fun main(args: Array<String>) {
-    Application(Runner()).run(args)
+    Application(Runner(Statistics())).run(args)
 }
