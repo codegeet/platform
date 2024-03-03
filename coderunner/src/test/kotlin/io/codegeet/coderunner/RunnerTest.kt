@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test
 
 class RunnerTest {
 
-    private val runner = Runner(Statistics(false))
+    private val runner = Runner(Statistics())
 
     @Test
     fun run() {
@@ -132,6 +132,7 @@ class RunnerTest {
         ContainerExecutionRequest(
             code = code,
             language = Language.JAVA,
-            invocations = invocations
+            invocations = invocations,
+            stats = false,
         )
 }

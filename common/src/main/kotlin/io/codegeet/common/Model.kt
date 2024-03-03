@@ -18,13 +18,15 @@ enum class Language(private val id: String) {
 data class ContainerExecutionRequest(
     val code: String,
     val language: Language,
-    val invocations: List<InvocationDetails> = listOf(InvocationDetails())
+    val invocations: List<InvocationDetails> = listOf(InvocationDetails()),
+    val stats: Boolean = false
 ) {
     data class InvocationDetails(
         val timeout: Long? = null,
         val arguments: List<String> = emptyList(),
         val stdIn: String? = null,
     )
+
 }
 
 data class ContainerExecutionResult(
@@ -53,9 +55,9 @@ data class ContainerExecutionResult(
 }
 
 enum class ExecutionStatus {
-    INTERNAL_ERROR, COMPILATION_ERROR, INVOCATION_ERROR, SUCCESS
+    INTERNAL_ERROR, COMPILATION_ERROR, INVOCATION_ERROR, TIMEOUT, SUCCESS
 }
 
 enum class InvocationStatus {
-    INTERNAL_ERROR, INVOCATION_ERROR, SUCCESS
+    INTERNAL_ERROR, INVOCATION_ERROR, TIMEOUT, SUCCESS
 }

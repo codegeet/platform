@@ -8,5 +8,3 @@ fun InputStream.readAsText(limit: Int = 2_000) = this.bufferedReader(Charsets.UT
             reader.read(this, 0, limit).takeIf { it > 0 }?.let { String(this, 0, it) } ?: ""
         }
     }
-
-fun String?.takeIfNotEmpty(): String? = this?.takeIf { it.isNotEmpty() }
