@@ -1,4 +1,4 @@
-package io.codegeet.sandbox.coderunner
+package io.codegeet.coderunner
 
 import java.io.InputStream
 

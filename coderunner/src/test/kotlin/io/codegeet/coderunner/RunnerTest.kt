@@ -1,9 +1,6 @@
-package io.codegeet.sandbox.coderunner
+package io.codegeet.coderunner
 
-import io.codegeet.sandbox.coderunner.model.ExecutionRequest
-import io.codegeet.sandbox.coderunner.model.ExecutionResult
-import io.codegeet.sandbox.coderunner.model.ExecutionStatus
-import io.codegeet.sandbox.coderunner.model.InvocationStatus
+import io.codegeet.common.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -14,9 +11,9 @@ class RunnerTest {
     @Test
     fun run() {
         assertEquals(
-            ExecutionResult(
+            ContainerExecutionResult(
                 status = ExecutionStatus.SUCCESS,
-                invocations = listOf(ExecutionResult.InvocationResult(status = InvocationStatus.SUCCESS))
+                invocations = listOf(ContainerExecutionResult.InvocationResult(status = InvocationStatus.SUCCESS))
             ), runner.run(
                 executionRequest("class Main { public static void main(String[] args) { }}")
             )
@@ -26,10 +23,10 @@ class RunnerTest {
     @Test
     fun `run with stdOut output`() {
         assertEquals(
-            ExecutionResult(
+            ContainerExecutionResult(
                 status = ExecutionStatus.SUCCESS,
                 invocations = listOf(
-                    ExecutionResult.InvocationResult(
+                    ContainerExecutionResult.InvocationResult(
                         status = InvocationStatus.SUCCESS,
                         stdOut = "test"
                     )
@@ -43,10 +40,10 @@ class RunnerTest {
     @Test
     fun `run with stdErr output`() {
         assertEquals(
-            ExecutionResult(
+            ContainerExecutionResult(
                 status = ExecutionStatus.SUCCESS,
                 invocations = listOf(
-                    ExecutionResult.InvocationResult(
+                    ContainerExecutionResult.InvocationResult(
                         status = InvocationStatus.SUCCESS,
                         stdErr = "test"
                     )
@@ -60,10 +57,10 @@ class RunnerTest {
     @Test
     fun `run with arguments`() {
         assertEquals(
-            ExecutionResult(
+            ContainerExecutionResult(
                 status = ExecutionStatus.SUCCESS,
                 invocations = listOf(
-                    ExecutionResult.InvocationResult(
+                    ContainerExecutionResult.InvocationResult(
                         status = InvocationStatus.SUCCESS,
                         stdOut = "test"
                     )
@@ -71,18 +68,19 @@ class RunnerTest {
             ), runner.run(
                 executionRequest(
                     "class Main { public static void main(String[] args) { System.out.print(args[0]); }}",
-                    listOf(ExecutionRequest.InvocationDetails(arguments = listOf("test")))
+                    listOf(ContainerExecutionRequest.InvocationDetails(arguments = listOf("test")))
                 )
             )
         )
     }
+
     @Test
     fun `run with stdIn`() {
         assertEquals(
-            ExecutionResult(
+            ContainerExecutionResult(
                 status = ExecutionStatus.SUCCESS,
                 invocations = listOf(
-                    ExecutionResult.InvocationResult(
+                    ContainerExecutionResult.InvocationResult(
                         status = InvocationStatus.SUCCESS,
                         stdOut = "test"
                     )
@@ -90,7 +88,7 @@ class RunnerTest {
             ), runner.run(
                 executionRequest(
                     "import java.util.Scanner; class Main { public static void main(String[] args) { System.out.print(new Scanner(System.in).nextLine()); }}",
-                    listOf(ExecutionRequest.InvocationDetails(stdIn = "test"))
+                    listOf(ContainerExecutionRequest.InvocationDetails(stdIn = "test"))
                 )
             )
         )
@@ -99,10 +97,10 @@ class RunnerTest {
     @Test
     fun `run invocation code exception`() {
         assertEquals(
-            ExecutionResult(
+            ContainerExecutionResult(
                 status = ExecutionStatus.INVOCATION_ERROR,
                 invocations = listOf(
-                    ExecutionResult.InvocationResult(
+                    ContainerExecutionResult.InvocationResult(
                         stdErr = "Exception in thread \"main\" java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0\n\tat Main.main(Main.java:1)\n",
                         status = InvocationStatus.INVOCATION_ERROR
                     )
@@ -116,7 +114,7 @@ class RunnerTest {
     @Test
     fun `run invocation compilation exception`() {
         assertEquals(
-            ExecutionResult(
+            ContainerExecutionResult(
                 status = ExecutionStatus.COMPILATION_ERROR,
                 error = "Main.java:1: error: not a statement\n" +
                         "class Main { public static void main(String[] args) { wft; }}\n" +
@@ -130,11 +128,10 @@ class RunnerTest {
 
     private fun executionRequest(code: String) = executionRequest(code, emptyList())
 
-    private fun executionRequest(code: String, invocations: List<ExecutionRequest.InvocationDetails>) =
-        ExecutionRequest(
+    private fun executionRequest(code: String, invocations: List<ContainerExecutionRequest.InvocationDetails>) =
+        ContainerExecutionRequest(
             code = code,
-            fileName = "Main.java",
-            commands = ExecutionRequest.ExecutionCommands(compilation = "javac Main.java", invocation = "java Main"),
+            language = Language.JAVA,
             invocations = invocations
         )
 }

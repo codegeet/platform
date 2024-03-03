@@ -1,21 +1,30 @@
-package io.codegeet.sandbox.coderunner
+package io.codegeet.coderunner
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.codegeet.sandbox.coderunner.model.ExecutionRequest
-import io.codegeet.sandbox.coderunner.model.ExecutionResult
-import io.codegeet.sandbox.coderunner.model.ExecutionStatus
+import io.codegeet.common.ContainerExecutionRequest
+import io.codegeet.common.ContainerExecutionResult
+import io.codegeet.common.ExecutionStatus
 
 class Application(private val runner: Runner) {
+
+    private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
+        propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+        setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    }
+
     fun run(args: Array<String>) {
         val result = try {
             parseInput()?.let { runner.run(it) }
-                ?: ExecutionResult(
+                ?: ContainerExecutionResult(
                     status = ExecutionStatus.INTERNAL_ERROR,
                     error = "Coderunner input is empty."
                 )
         } catch (e: JsonMappingException) {
-            ExecutionResult(
+            ContainerExecutionResult(
                 status = ExecutionStatus.INTERNAL_ERROR,
                 error = "Failed to parse coderunner input: ${e.message}"
             )
@@ -23,7 +32,7 @@ class Application(private val runner: Runner) {
         println(result.toJson())
     }
 
-    private fun parseInput(): ExecutionRequest? {
+    private fun parseInput(): ContainerExecutionRequest? {
         val stringBuilder = StringBuilder()
         while (true) {
             val line = readlnOrNull()
@@ -34,11 +43,11 @@ class Application(private val runner: Runner) {
 
         return stringBuilder.toString()
             .takeIf { it.isNotEmpty() }
-            ?.let { jacksonObjectMapper().readValue(it, ExecutionRequest::class.java) }
+            ?.let { objectMapper.readValue(it, ContainerExecutionRequest::class.java) }
     }
 
-    private fun ExecutionResult.toJson(): String =
-        jacksonObjectMapper().writeValueAsString(this)
+    private fun ContainerExecutionResult.toJson(): String =
+        objectMapper.writeValueAsString(this)
 }
 
 fun main(args: Array<String>) {

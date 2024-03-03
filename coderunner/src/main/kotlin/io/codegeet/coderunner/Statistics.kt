@@ -1,4 +1,4 @@
-package io.codegeet.sandbox.coderunner
+package io.codegeet.coderunner
 
 class Statistics(private val enabled: Boolean = true) {
 
