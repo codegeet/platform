@@ -3,8 +3,8 @@ package io.codegeet.coderunner
 import io.codegeet.coderunner.config.LanguageConfig
 import io.codegeet.coderunner.exceptions.CompilationException
 import io.codegeet.coderunner.exceptions.TimeoutException
-import io.codegeet.common.ContainerExecutionRequest
-import io.codegeet.common.ContainerExecutionResult
+import io.codegeet.common.ExecutionJobRequest
+import io.codegeet.common.ExecutionJobResult
 import io.codegeet.common.ExecutionStatus
 import io.codegeet.common.InvocationStatus
 import java.io.File
@@ -19,65 +19,65 @@ class Runner(private val statistics: Statistics) {
         const val DEFAULT_INVOCATION_TIMEOUT_MILLIS: Long = 5_000
     }
 
-    fun run(input: ContainerExecutionRequest): ContainerExecutionResult {
+    fun run(input: ExecutionJobRequest): ExecutionJobResult {
         return try {
             val directory = initDirectory(input)
 
             val compilationDetails = compileIfNeeded(input, directory)
             val invocationResult = invoke(input, directory)
 
-            ContainerExecutionResult(
+            ExecutionJobResult(
                 status = calculateExecutionStatus(invocationResult),
                 compilation = compilationDetails,
                 invocations = invocationResult,
             )
         } catch (e: CompilationException) {
-            ContainerExecutionResult(
+            ExecutionJobResult(
                 status = ExecutionStatus.COMPILATION_ERROR,
                 error = e.message,
             )
         } catch (e: Exception) {
-            ContainerExecutionResult(
+            ExecutionJobResult(
                 status = ExecutionStatus.INTERNAL_ERROR,
                 error = "Something went wrong during the execution: ${e.message}"
             )
         }
     }
 
-    private fun calculateExecutionStatus(invocationResult: List<ContainerExecutionResult.InvocationResult>) =
+    private fun calculateExecutionStatus(invocationResult: List<ExecutionJobResult.InvocationResult>) =
         if (invocationResult.all { it.status == InvocationStatus.SUCCESS }) ExecutionStatus.SUCCESS else ExecutionStatus.INVOCATION_ERROR
 
     private fun compileIfNeeded(
-        input: ContainerExecutionRequest,
+        input: ExecutionJobRequest,
         directory: String
-    ): ContainerExecutionResult.CompilationDetails? =
+    ): ExecutionJobResult.CompilationDetails? =
         LanguageConfig.get(input.language).compilation?.let { command ->
             compile(command, directory)
         }
 
     private fun invoke(
-        input: ContainerExecutionRequest,
+        input: ExecutionJobRequest,
         directory: String
-    ): List<ContainerExecutionResult.InvocationResult> =
-        (input.invocations.ifEmpty { listOf(ContainerExecutionRequest.InvocationDetails()) })
+    ): List<ExecutionJobResult.InvocationResult> =
+        (input.invocations.ifEmpty { listOf(ExecutionJobRequest.InvocationRequest()) })
             .map { invocation ->
                 try {
                     val command = LanguageConfig.get(input.language).invocation
                     invocation(command, invocation, directory)
                 } catch (e: TimeoutException) {
-                    ContainerExecutionResult.InvocationResult(
+                    ExecutionJobResult.InvocationResult(
                         status = InvocationStatus.TIMEOUT,
                         error = e.message
                     )
                 } catch (e: Exception) {
-                    ContainerExecutionResult.InvocationResult(
+                    ExecutionJobResult.InvocationResult(
                         status = InvocationStatus.INTERNAL_ERROR,
                         error = "Something went wrong during the invocation: ${e.message}"
                     )
                 }
             }
 
-    private fun initDirectory(input: ContainerExecutionRequest) = try {
+    private fun initDirectory(input: ExecutionJobRequest) = try {
         val directory = getUserHomeDirectory()
         writeFiles(input.code, directory, LanguageConfig.get(input.language).fileName)
 
@@ -90,7 +90,7 @@ class Runner(private val statistics: Statistics) {
         compilationCommand: String,
         directory: String,
         stats: Boolean = false
-    ): ContainerExecutionResult.CompilationDetails? {
+    ): ExecutionJobResult.CompilationDetails? {
         try {
             val command = (if (stats) statistics.buildStatisticsCall() else emptyList()) + compilationCommand.split(" ")
             val processBuilder = ProcessBuilder(command)
@@ -108,7 +108,7 @@ class Runner(private val statistics: Statistics) {
                 throw CompilationException(statistics.cleanStatistics(stdErr).takeIf { it.isNotEmpty() } ?: stdOut)
             }
 
-            return if (stats) ContainerExecutionResult.CompilationDetails(
+            return if (stats) ExecutionJobResult.CompilationDetails(
                 duration = (System.nanoTime() - startTime) / 1_000_000,
                 memory = statistics.getStatistics(stdErr)
             ) else null
@@ -122,10 +122,10 @@ class Runner(private val statistics: Statistics) {
 
     private fun invocation(
         invocationCommand: String,
-        invocation: ContainerExecutionRequest.InvocationDetails,
+        invocation: ExecutionJobRequest.InvocationRequest,
         directory: String,
         stats: Boolean = false
-    ): ContainerExecutionResult.InvocationResult {
+    ): ExecutionJobResult.InvocationResult {
         val command =
             (if (stats) statistics.buildStatisticsCall() else emptyList()) + invocationCommand.split(" ") + invocation.arguments
         val processBuilder = ProcessBuilder(command).directory(File(directory))
@@ -143,10 +143,10 @@ class Runner(private val statistics: Statistics) {
         val errorStream = process.errorStream.readAsText()
         val inputStream = process.inputStream.readAsText()
 
-        return ContainerExecutionResult.InvocationResult(
+        return ExecutionJobResult.InvocationResult(
             status = if (process.exitValue() == 0) InvocationStatus.SUCCESS else InvocationStatus.INVOCATION_ERROR,
             details = if (stats)
-                ContainerExecutionResult.InvocationDetails(
+                ExecutionJobResult.InvocationDetails(
                     duration = (System.nanoTime() - startTime) / 1_000_000,
                     memory = statistics.getStatistics(errorStream),
                 ) else null,

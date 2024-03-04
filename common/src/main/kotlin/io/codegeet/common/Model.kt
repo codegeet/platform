@@ -15,21 +15,20 @@ enum class Language(private val id: String) {
     fun getId(): String = id
 }
 
-data class ContainerExecutionRequest(
+data class ExecutionJobRequest(
     val code: String,
     val language: Language,
-    val invocations: List<InvocationDetails> = listOf(InvocationDetails()),
+    val invocations: List<InvocationRequest> = listOf(InvocationRequest()),
     val stats: Boolean = false
 ) {
-    data class InvocationDetails(
+    data class InvocationRequest(
         val timeout: Long? = null,
-        val arguments: List<String> = emptyList(),
+        val arguments: List<String>? = emptyList(),
         val stdIn: String? = null,
     )
-
 }
 
-data class ContainerExecutionResult(
+data class ExecutionJobResult(
     val status: ExecutionStatus,
     val compilation: CompilationDetails? = null,
     val invocations: List<InvocationResult> = emptyList(),

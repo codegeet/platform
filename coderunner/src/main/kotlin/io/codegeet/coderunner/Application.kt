@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.codegeet.common.ContainerExecutionRequest
-import io.codegeet.common.ContainerExecutionResult
+import io.codegeet.common.ExecutionJobRequest
+import io.codegeet.common.ExecutionJobResult
 import io.codegeet.common.ExecutionStatus
 
 class Application(private val runner: Runner) {
@@ -19,12 +19,12 @@ class Application(private val runner: Runner) {
     fun run(args: Array<String>) {
         val result = try {
             parseInput()?.let { runner.run(it) }
-                ?: ContainerExecutionResult(
+                ?: ExecutionJobResult(
                     status = ExecutionStatus.INTERNAL_ERROR,
                     error = "Coderunner input is empty."
                 )
         } catch (e: JsonMappingException) {
-            ContainerExecutionResult(
+            ExecutionJobResult(
                 status = ExecutionStatus.INTERNAL_ERROR,
                 error = "Failed to parse coderunner input: ${e.message}"
             )
@@ -32,7 +32,7 @@ class Application(private val runner: Runner) {
         println(result.toJson())
     }
 
-    private fun parseInput(): ContainerExecutionRequest? {
+    private fun parseInput(): ExecutionJobRequest? {
         val stringBuilder = StringBuilder()
         while (true) {
             val line = readlnOrNull()
@@ -43,10 +43,10 @@ class Application(private val runner: Runner) {
 
         return stringBuilder.toString()
             .takeIf { it.isNotEmpty() }
-            ?.let { objectMapper.readValue(it, ContainerExecutionRequest::class.java) }
+            ?.let { objectMapper.readValue(it, ExecutionJobRequest::class.java) }
     }
 
-    private fun ContainerExecutionResult.toJson(): String =
+    private fun ExecutionJobResult.toJson(): String =
         objectMapper.writeValueAsString(this)
 }
 
