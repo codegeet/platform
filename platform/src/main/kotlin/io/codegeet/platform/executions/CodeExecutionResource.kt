@@ -1,6 +1,5 @@
 package io.codegeet.platform.executions
 
-import io.codegeet.common.ExecutionJobRequest
 import io.codegeet.common.ExecutionStatus
 import io.codegeet.common.InvocationStatus
 import io.codegeet.common.Language
@@ -10,29 +9,29 @@ import org.springframework.web.bind.annotation.*
 
 @Controller
 @RequestMapping("api/executions")
-class ExecutionController(
-    private val executionService: ExecutionService
+class CodeExecutionResource(
+    private val codeExecutionService: CodeExecutionService
 ) {
 
     @PostMapping
     @ResponseBody
-    fun post(@RequestBody request: ExecutionRequest): ExecutionResponse {
-        return executionService.execute(request).toResponse()
+    fun post(@RequestBody request: CodeExecutionRequest): CodeExecutionResponse {
+        return codeExecutionService.execute(request).toResponse()
     }
 
     @GetMapping("/{execution_id}")
     @ResponseBody
-    fun get(@PathVariable("execution_id") executionId: String): ExecutionResponse {
-        return executionService.getExecution(executionId).toResponse()
+    fun get(@PathVariable("execution_id") executionId: String): CodeExecutionResponse {
+        return codeExecutionService.getExecution(executionId).toResponse()
     }
 
-    private fun Execution.toResponse() = ExecutionResponse(
+    private fun Execution.toResponse() = CodeExecutionResponse(
         executionId = this.executionId,
         status = this.status,
         error = this.error,
         time = this.totalTime,
         invocations = this.invocations.map {
-            ExecutionResponse.InvocationOutput(
+            CodeExecutionResponse.InvocationOutput(
                 status = it.status,
                 stdOut = it.stdOut,
                 stdErr = it.stdErr
@@ -40,7 +39,7 @@ class ExecutionController(
         }
     )
 
-    data class ExecutionRequest(
+    data class CodeExecutionRequest(
         val code: String,
         val language: Language,
         val invocations: List<InvocationInput> = emptyList(),
@@ -51,7 +50,7 @@ class ExecutionController(
         )
     }
 
-    data class ExecutionResponse(
+    data class CodeExecutionResponse(
         val executionId: String,
         val status: ExecutionStatus?,
         val time: Int?,

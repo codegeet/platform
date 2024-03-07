@@ -14,7 +14,7 @@ import java.time.Duration
 
 @Configuration
 @EnableConfigurationProperties(DockerContainerConfiguration::class)
-class DockerConfiguration(private val environment: Environment) {
+class DockerConfiguration() {
 
     @Bean
     fun dockerClient(): DockerClient {

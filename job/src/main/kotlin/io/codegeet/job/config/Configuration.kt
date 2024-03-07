@@ -6,12 +6,12 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.env.Environment
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import java.time.Clock
 
+
 @Configuration
-class Configuration(private val environment: Environment) {
+class Configuration() {
 
     @Bean
     fun objectMapperBuilder(): Jackson2ObjectMapperBuilder = Jackson2ObjectMapperBuilder.json()

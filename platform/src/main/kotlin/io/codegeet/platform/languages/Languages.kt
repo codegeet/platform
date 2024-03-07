@@ -1,6 +1,5 @@
 package io.codegeet.platform.languages
 
-import com.fasterxml.jackson.annotation.JsonValue
 import io.codegeet.common.Language
 
 

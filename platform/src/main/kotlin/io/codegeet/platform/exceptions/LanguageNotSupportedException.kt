@@ -1,4 +1,4 @@
-package io.codegeet.judge.languages.exceptions
+package io.codegeet.platform.exceptions
 
 import io.codegeet.common.Language
 

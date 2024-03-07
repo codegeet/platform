@@ -3,8 +3,8 @@ package io.codegeet.coderunner
 import io.codegeet.coderunner.config.LanguageConfig
 import io.codegeet.coderunner.exceptions.CompilationException
 import io.codegeet.coderunner.exceptions.TimeoutException
-import io.codegeet.common.ExecutionJobRequest
-import io.codegeet.common.ExecutionJobResult
+import io.codegeet.common.CodeExecutionJobRequest
+import io.codegeet.common.CodeExecutionJobResult
 import io.codegeet.common.ExecutionStatus
 import io.codegeet.common.InvocationStatus
 import java.io.File
@@ -19,65 +19,65 @@ class Runner(private val statistics: Statistics) {
         const val DEFAULT_INVOCATION_TIMEOUT_MILLIS: Long = 5_000
     }
 
-    fun run(input: ExecutionJobRequest): ExecutionJobResult {
+    fun run(input: CodeExecutionJobRequest): CodeExecutionJobResult {
         return try {
             val directory = initDirectory(input)
 
             val compilationDetails = compileIfNeeded(input, directory)
             val invocationResult = invoke(input, directory)
 
-            ExecutionJobResult(
+            CodeExecutionJobResult(
                 status = calculateExecutionStatus(invocationResult),
                 compilation = compilationDetails,
                 invocations = invocationResult,
             )
         } catch (e: CompilationException) {
-            ExecutionJobResult(
+            CodeExecutionJobResult(
                 status = ExecutionStatus.COMPILATION_ERROR,
                 error = e.message,
             )
         } catch (e: Exception) {
-            ExecutionJobResult(
+            CodeExecutionJobResult(
                 status = ExecutionStatus.INTERNAL_ERROR,
                 error = "Something went wrong during the execution: ${e.message}"
             )
         }
     }
 
-    private fun calculateExecutionStatus(invocationResult: List<ExecutionJobResult.InvocationResult>) =
+    private fun calculateExecutionStatus(invocationResult: List<CodeExecutionJobResult.InvocationResult>) =
         if (invocationResult.all { it.status == InvocationStatus.SUCCESS }) ExecutionStatus.SUCCESS else ExecutionStatus.INVOCATION_ERROR
 
     private fun compileIfNeeded(
-        input: ExecutionJobRequest,
+        input: CodeExecutionJobRequest,
         directory: String
-    ): ExecutionJobResult.CompilationDetails? =
+    ): CodeExecutionJobResult.CompilationDetails? =
         LanguageConfig.get(input.language).compilation?.let { command ->
             compile(command, directory)
         }
 
     private fun invoke(
-        input: ExecutionJobRequest,
+        input: CodeExecutionJobRequest,
         directory: String
-    ): List<ExecutionJobResult.InvocationResult> =
-        (input.invocations.ifEmpty { listOf(ExecutionJobRequest.InvocationRequest()) })
+    ): List<CodeExecutionJobResult.InvocationResult> =
+        (input.invocations.ifEmpty { listOf(CodeExecutionJobRequest.InvocationRequest()) })
             .map { invocation ->
                 try {
                     val command = LanguageConfig.get(input.language).invocation
                     invocation(command, invocation, directory)
                 } catch (e: TimeoutException) {
-                    ExecutionJobResult.InvocationResult(
+                    CodeExecutionJobResult.InvocationResult(
                         status = InvocationStatus.TIMEOUT,
                         error = e.message
                     )
                 } catch (e: Exception) {
-                    ExecutionJobResult.InvocationResult(
+                    CodeExecutionJobResult.InvocationResult(
                         status = InvocationStatus.INTERNAL_ERROR,
                         error = "Something went wrong during the invocation: ${e.message}"
                     )
                 }
             }
 
-    private fun initDirectory(input: ExecutionJobRequest) = try {
+    private fun initDirectory(input: CodeExecutionJobRequest) = try {
         val directory = getUserHomeDirectory()
         writeFiles(input.code, directory, LanguageConfig.get(input.language).fileName)
 
@@ -90,7 +90,7 @@ class Runner(private val statistics: Statistics) {
         compilationCommand: String,
         directory: String,
         stats: Boolean = false
-    ): ExecutionJobResult.CompilationDetails? {
+    ): CodeExecutionJobResult.CompilationDetails? {
         try {
             val command = (if (stats) statistics.buildStatisticsCall() else emptyList()) + compilationCommand.split(" ")
             val processBuilder = ProcessBuilder(command)
@@ -108,7 +108,7 @@ class Runner(private val statistics: Statistics) {
                 throw CompilationException(statistics.cleanStatistics(stdErr).takeIf { it.isNotEmpty() } ?: stdOut)
             }
 
-            return if (stats) ExecutionJobResult.CompilationDetails(
+            return if (stats) CodeExecutionJobResult.CompilationDetails(
                 duration = (System.nanoTime() - startTime) / 1_000_000,
                 memory = statistics.getStatistics(stdErr)
             ) else null
@@ -122,12 +122,11 @@ class Runner(private val statistics: Statistics) {
 
     private fun invocation(
         invocationCommand: String,
-        invocation: ExecutionJobRequest.InvocationRequest,
+        invocation: CodeExecutionJobRequest.InvocationRequest,
         directory: String,
         stats: Boolean = false
-    ): ExecutionJobResult.InvocationResult {
-        val command =
-            (if (stats) statistics.buildStatisticsCall() else emptyList()) + invocationCommand.split(" ") + invocation.arguments
+    ): CodeExecutionJobResult.InvocationResult {
+        val command = (if (stats) statistics.buildStatisticsCall() else emptyList()) + invocationCommand.split(" ") + invocation.arguments.orEmpty()
         val processBuilder = ProcessBuilder(command).directory(File(directory))
 
         val startTime = System.nanoTime()
@@ -143,10 +142,10 @@ class Runner(private val statistics: Statistics) {
         val errorStream = process.errorStream.readAsText()
         val inputStream = process.inputStream.readAsText()
 
-        return ExecutionJobResult.InvocationResult(
+        return CodeExecutionJobResult.InvocationResult(
             status = if (process.exitValue() == 0) InvocationStatus.SUCCESS else InvocationStatus.INVOCATION_ERROR,
             details = if (stats)
-                ExecutionJobResult.InvocationDetails(
+                CodeExecutionJobResult.InvocationDetails(
                     duration = (System.nanoTime() - startTime) / 1_000_000,
                     memory = statistics.getStatistics(errorStream),
                 ) else null,

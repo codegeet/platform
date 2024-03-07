@@ -1,11 +1,11 @@
-package io.codegeet.judge
+package io.codegeet.job
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
 @SpringBootApplication
-class PlatformApplication
+class CodeExecutionJobApplication
 
 fun main(args: Array<String>) {
-	runApplication<PlatformApplication>(*args)
+	runApplication<CodeExecutionJobApplication>(*args)
 }

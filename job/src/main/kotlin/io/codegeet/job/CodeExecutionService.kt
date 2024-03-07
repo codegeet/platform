@@ -1,4 +1,4 @@
-package io.codegeet.job.docker
+package io.codegeet.job
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.dockerjava.api.DockerClient
@@ -6,10 +6,13 @@ import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.StreamType
-import io.codegeet.common.ExecutionJobResult
+import io.codegeet.common.CodeExecutionJobRequest
+import io.codegeet.common.CodeExecutionJobResult
 import io.codegeet.common.ExecutionStatus
 import io.codegeet.job.config.DockerConfiguration.DockerContainerConfiguration
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
 import java.io.PipedInputStream
@@ -18,7 +21,7 @@ import java.nio.channels.ClosedByInterruptException
 import java.util.concurrent.TimeUnit
 
 @Service
-class DockerService(
+class CodeExecutionService(
     private val dockerClient: DockerClient,
     private val config: DockerContainerConfiguration,
     private val objectMapper: ObjectMapper
@@ -26,9 +29,9 @@ class DockerService(
     private val log = LogFactory.getLog(javaClass)
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun exec(image: String, input: String): ExecutionJobResult {
+    fun execute(request: CodeExecutionJobRequest): CodeExecutionJobResult {
         return try {
-            val containerId = createContainer(image)
+            val containerId = createContainer("codegeet/${request.language.getId()}:latest")
 
             val callback = ContainerCallback(containerId)
 
@@ -38,7 +41,7 @@ class DockerService(
             val attachContainerCallback = attachContainer(containerId, inputStream, callback)
             startContainer(containerId)
 
-            outputStream.write("$input\n\n".toByteArray())
+            outputStream.write("${objectMapper.writeValueAsString(request)}\n\n".toByteArray())
             outputStream.flush()
             outputStream.close()
 
@@ -52,7 +55,10 @@ class DockerService(
 
             buildExecutionResult(callback)
         } catch (e: Exception) {
-            ExecutionJobResult(status = ExecutionStatus.INTERNAL_ERROR, error = "Docker container failure ${e.message}")
+            CodeExecutionJobResult(
+                status = ExecutionStatus.INTERNAL_ERROR,
+                error = "Docker container failure ${e.message}"
+            )
         }
     }
 
@@ -100,15 +106,15 @@ class DockerService(
             }.id
     }
 
-    private fun buildExecutionResult(callback: ContainerCallback): ExecutionJobResult = try {
+    private fun buildExecutionResult(callback: ContainerCallback): CodeExecutionJobResult = try {
         callback.getStdOut()
             .takeIf { it.isNotEmpty() }
-            ?.let { objectMapper.readValue(it, ExecutionJobResult::class.java) }
-            ?: ExecutionJobResult(
+            ?.let { objectMapper.readValue(it, CodeExecutionJobResult::class.java) }
+            ?: CodeExecutionJobResult(
                 status = ExecutionStatus.INTERNAL_ERROR,
                 error = callback.getStdErr().takeIf { it.isNotEmpty() } ?: "No stdout from container")
     } catch (e: Exception) {
-        ExecutionJobResult(
+        CodeExecutionJobResult(
             status = ExecutionStatus.INTERNAL_ERROR,
             error = "Failed to parse container output: ${callback.getStdOut()}"
         )

@@ -1,7 +1,9 @@
 package io.codegeet.platform.executions
 
-import io.codegeet.common.ExecutionJobRequest
-import io.codegeet.platform.executions.exceptions.ExecutionNotFoundException
+import io.codegeet.common.CodeExecutionJobRequest
+import io.codegeet.platform.job.CodeExecutionJobClient
+import io.codegeet.platform.exceptions.ExecutionNotFoundException
+import io.codegeet.platform.executions.model.CodeExecutionRepository
 import io.codegeet.platform.executions.model.Execution
 import io.codegeet.platform.executions.model.Invocation
 import org.springframework.data.repository.findByIdOrNull
@@ -12,13 +14,13 @@ import java.time.temporal.ChronoUnit
 import java.util.UUID
 
 @Service
-class ExecutionService(
-    private val executionRepository: ExecutionRepository,
-    private val executionJobClient: ExecutionJobClient,
+class CodeExecutionService(
+    private val codeExecutionRepository: CodeExecutionRepository,
+    private val codeExecutionJobClient: CodeExecutionJobClient,
     private val clock: Clock,
 ) {
-    fun execute(request: ExecutionController.ExecutionRequest, sync: Boolean = false): Execution {
-        val execution = executionRepository.save(toExecution(request))
+    fun execute(request: CodeExecutionResource.CodeExecutionRequest, sync: Boolean = false): Execution {
+        val execution = codeExecutionRepository.save(toExecution(request))
 
         return if (sync) {
             execute(execution)
@@ -29,13 +31,13 @@ class ExecutionService(
         }
     }
 
-    fun getExecution(executionId: String): Execution = executionRepository.findByIdOrNull(executionId)
+    fun getExecution(executionId: String): Execution = codeExecutionRepository.findByIdOrNull(executionId)
         ?: throw ExecutionNotFoundException(executionId)
 
     private fun execute(execution: Execution): Execution {
-        return executionJobClient.call(execution.toExecutionJobRequest())
+        return codeExecutionJobClient.call(execution.toExecutionJobRequest())
             .let { response ->
-                executionRepository.save(
+                codeExecutionRepository.save(
                     execution.copy(
                         status = response.status,
                         error = response.error,
@@ -56,12 +58,12 @@ class ExecutionService(
             }
     }
 
-    private fun toExecution(request: ExecutionController.ExecutionRequest) = request.toExecution(
+    private fun toExecution(request: CodeExecutionResource.CodeExecutionRequest) = request.toExecution(
         executionId = UUID.randomUUID().toString(),
         now = Instant.now(clock).truncatedTo(ChronoUnit.MILLIS)
     )
 
-    private fun ExecutionController.ExecutionRequest.toExecution(executionId: String, now: Instant) = Execution(
+    private fun CodeExecutionResource.CodeExecutionRequest.toExecution(executionId: String, now: Instant) = Execution(
         executionId = executionId,
         code = this.code,
         language = this.language,
@@ -74,7 +76,7 @@ class ExecutionService(
                     invocationId = UUID.randomUUID().toString(),
                     executionId = execution.executionId,
                     status = null,
-                    arguments = it.arguments?.joinToString(" "),
+                    arguments = it.arguments?.joinToString("\n"),
                     stdIn = it.stdIn,
                 )
             } ?: listOf(
@@ -89,11 +91,11 @@ class ExecutionService(
     }
 
     private fun Execution.toExecutionJobRequest() =
-        ExecutionJobRequest(
+        CodeExecutionJobRequest(
             code = this.code,
             language = this.language,
             invocations = this.invocations.map {
-                ExecutionJobRequest.InvocationRequest(
+                CodeExecutionJobRequest.InvocationRequest(
                     arguments = it.arguments?.split("\n"),
                     stdIn = it.stdIn
                 )

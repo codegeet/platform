@@ -4,6 +4,10 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import org.springframework.amqp.core.Binding
+import org.springframework.amqp.core.BindingBuilder
+import org.springframework.amqp.core.DirectExchange
+import org.springframework.amqp.core.Queue
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
@@ -23,19 +27,32 @@ class Configuration() {
         .modulesToInstall(KotlinModule.Builder().build())
 
     @Bean
+    fun producerJackson2MessageConverter(): Jackson2JsonMessageConverter {
+        val objectMapper = ObjectMapper().registerModule(KotlinModule.Builder().build())
+        return Jackson2JsonMessageConverter(objectMapper)
+    }
+
+    @Bean
     fun objectMapper(builder: Jackson2ObjectMapperBuilder): ObjectMapper = builder.build()
 
     @Bean
     fun clock(): Clock = Clock.systemUTC()
 
+    companion object {
+        val QUEUE_NAME: String = "rpc_queue"
+    }
+
     @Bean
-    fun rabbitTemplate(
-        connectionFactory: ConnectionFactory,
-        jsonMessageConverter: Jackson2JsonMessageConverter
-    ): RabbitTemplate {
+    fun queue(): Queue {
+        return Queue(QUEUE_NAME, false)
+    }
+
+    @Bean
+    fun rabbitTemplate(connectionFactory: ConnectionFactory,
+                       jsonMessageConverter: Jackson2JsonMessageConverter): RabbitTemplate {
         val rabbitTemplate = RabbitTemplate(connectionFactory)
         rabbitTemplate.messageConverter = jsonMessageConverter
-
+        rabbitTemplate.setReplyTimeout(6000)
         return rabbitTemplate
     }
 }

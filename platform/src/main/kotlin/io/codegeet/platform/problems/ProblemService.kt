@@ -2,7 +2,7 @@ package io.codegeet.platform.problems
 
 import io.codegeet.platform.problems.data.Problem
 import io.codegeet.platform.problems.data.ProblemsRepository
-import io.codegeet.platform.problems.exceptions.ProblemNotFoundException
+import io.codegeet.platform.exceptions.ProblemNotFoundException
 import org.springframework.stereotype.Service
 import kotlin.jvm.optionals.getOrElse
 

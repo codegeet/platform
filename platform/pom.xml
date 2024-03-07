@@ -12,10 +12,6 @@
     <artifactId>platform</artifactId>
     <packaging>jar</packaging>
 
-    <properties>
-        <kotlin.version>1.9.22</kotlin.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>io.codegeet</groupId>
@@ -96,11 +92,6 @@
             <artifactId>httpclient5</artifactId>
             <version>5.2.1</version>
         </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>33.0.0-jre</version>
-        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -149,7 +140,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <jvmTarget>1.8</jvmTarget>
+                    <jvmTarget>17</jvmTarget>
                 </configuration>
             </plugin>
         </plugins>

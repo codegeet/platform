@@ -15,7 +15,7 @@ enum class Language(private val id: String) {
     fun getId(): String = id
 }
 
-data class ExecutionJobRequest(
+data class CodeExecutionJobRequest(
     val code: String,
     val language: Language,
     val invocations: List<InvocationRequest> = listOf(InvocationRequest()),
@@ -28,7 +28,7 @@ data class ExecutionJobRequest(
     )
 }
 
-data class ExecutionJobResult(
+data class CodeExecutionJobResult(
     val status: ExecutionStatus,
     val compilation: CompilationDetails? = null,
     val invocations: List<InvocationResult> = emptyList(),
