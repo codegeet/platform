@@ -24,8 +24,8 @@ class SubmissionExecutionService(private val executionService: CodeExecutionServ
                     language = request.language,
                     invocations = request.invocations.map {
                         CodeExecutionResource.CodeExecutionRequest.InvocationInput(
-                            stdIn = it.stdIn,
-                            arguments = listOf(request.executionId) + it.args.orEmpty()
+                            //stdIn = it.stdIn,
+                            arguments = listOf(request.executionId) + it.input.split("\n").orEmpty()
                         )
                     },
                 ), true
@@ -36,18 +36,20 @@ class SubmissionExecutionService(private val executionService: CodeExecutionServ
                     time = response.totalTime,
                     error = response.error,
                     invocations = response.invocations.map { it ->
-                        SubmissionExecutionResponse.InvocationOutput(
-                            status = it.status,
-                            stdOut = it.stdOut?.lines()
-                                ?.filterNot { line -> line.startsWith(executionPrefix) }
-                                ?.joinToString("\n")
-                                .orEmpty(),
-                            output = it.stdOut?.lines()
-                                ?.firstOrNull { line -> line.startsWith(executionPrefix) }
-                                ?.removePrefix(executionPrefix)
-                                .orEmpty(),
-                            stdErr = it.stdErr.orEmpty()
-                        )
+                        SubmissionExecutionResponse.Invocation(
+                            input = it.arguments?.split("\n")?.drop(1)?.joinToString("\n").orEmpty(),
+                            output = SubmissionExecutionResponse.InvocationOutput(
+                                status = it.status,
+                                stdOut = it.stdOut?.lines()
+                                    ?.filterNot { line -> line.startsWith(executionPrefix) }
+                                    ?.joinToString("\n")
+                                    .orEmpty(),
+                                output = it.stdOut?.lines()
+                                    ?.firstOrNull { line -> line.startsWith(executionPrefix) }
+                                    ?.removePrefix(executionPrefix)
+                                    .orEmpty(),
+                                stdErr = it.stdErr.orEmpty()
+                            ))
                     }
                 )
             }
@@ -81,11 +83,10 @@ data class SubmissionExecutionRequest(
     val snippet: String,
     val language: Language,
     val problem: Problem,
-    val invocations: List<InvocationInput> = emptyList(),
+    val invocations: List<Invocation> = emptyList(),
 ) {
-    data class InvocationInput(
-        val stdIn: String? = null,
-        val args: List<String>? = null
+    data class Invocation(
+        val input: String
     )
 }
 
@@ -94,8 +95,13 @@ data class SubmissionExecutionResponse(
     val status: ExecutionStatus?,
     val time: Int? = null,
     val error: String? = null,
-    val invocations: List<InvocationOutput>? = emptyList()
+    val invocations: List<Invocation>? = emptyList()
 ) {
+    data class Invocation(
+        val input: String,
+        val output: InvocationOutput,
+    )
+
     data class InvocationOutput(
         val status: InvocationStatus?,
         val output: String?,

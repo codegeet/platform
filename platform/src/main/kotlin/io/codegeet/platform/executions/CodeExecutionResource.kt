@@ -45,8 +45,8 @@ class CodeExecutionResource(
         val invocations: List<InvocationInput> = emptyList(),
     ) {
         data class InvocationInput(
-            val stdIn: String?,
-            val arguments: List<String>?
+            val stdIn: String? = null,
+            val arguments: List<String>? = null,
         )
     }
 

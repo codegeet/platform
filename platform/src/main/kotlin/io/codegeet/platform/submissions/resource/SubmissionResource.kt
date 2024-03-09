@@ -36,8 +36,13 @@ class SubmissionResource(
         val problemId: String,
         val snippet: String,
         val language: Language,
-        val inputs: List<String>
-    )
+        val cases: List<Case>,
+    ) {
+        data class Case(
+            val input: String,
+            val expected: String?,
+        )
+    }
 
     data class SubmissionResponse(
         val submissionId: String,

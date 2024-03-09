@@ -35,14 +35,14 @@ class SubmissionService(
     }
 
     fun test(request: SubmissionRequest): Submission {
-        if (request.inputs.isEmpty())
+        if (request.cases.isEmpty())
             throw IllegalArgumentException("inputs should not be empty")
 
         return submit(
             problemId = request.problemId,
             snippet = request.snippet,
             language = request.language,
-            inputs = request.inputs,
+            cases = request.cases,
             type = SubmissionType.TEST
         )
     }
@@ -54,7 +54,7 @@ class SubmissionService(
         problemId: String,
         snippet: String,
         language: Language,
-        inputs: List<String> = emptyList(),
+        cases: List<SubmissionRequest.Case> = emptyList(),
         type: SubmissionType
     ): Submission {
         val problem = problemService.get(problemId)
@@ -70,7 +70,7 @@ class SubmissionService(
                 createdAt = Instant.now(clock).truncatedTo(ChronoUnit.MILLIS)
             )
         )
-        processSubmission(problem, submission, inputs)
+        processSubmission(problem, submission, cases)
         return submission
     }
 
@@ -80,68 +80,77 @@ class SubmissionService(
     private fun queueSubmission(
         problem: Problem,
         submission: Submission,
-        inputs: List<String>,
+        cases: List<SubmissionRequest.Case>
     ) {
         processSubmission(
             problem = problem,
             submission = submission,
-            inputs = inputs
+            cases = cases
         )
     }
 
     private fun processSubmission(
         problem: Problem,
         submission: Submission,
-        inputs: List<String>,
+        cases: List<SubmissionRequest.Case>
     ) {
-        val actual = execute(submission.snippet, submission.language, problem, inputs)
-        //todo reason why it failed
-        if (actual.status != ExecutionStatus.SUCCESS)
-            submission.copy(status = FAILED)
+        val actual = executionService.execute(SubmissionExecutionRequest(
+            executionId = UUID.randomUUID().toString(),
+            snippet = submission.snippet,
+            language = submission.language,
+            problem = problem,
+            invocations = cases.map { SubmissionExecutionRequest.Invocation(input = it.input) }
+        ))
 
-        val expected = execute(getSolution(problem).snippet, submission.language, problem, inputs)
-            .also { result ->
-                if (result.status != ExecutionStatus.SUCCESS) {
-                    val error = result.error
-                        ?.takeIf { it.isNotEmpty() }
-                        ?: result.invocations?.firstOrNull { it.status != InvocationStatus.SUCCESS }?.stdErr
-                    throw InternalError("Failed to get expected results for problem: ${problem.problemId}. $error")
+        val processedSubmission = if (actual.status == ExecutionStatus.SUCCESS) {
+            val calculatedExpected = cases.takeIf { it.any { case -> case.expected == null } }
+                ?.let {
+                    executionService.execute(SubmissionExecutionRequest(
+                        executionId = UUID.randomUUID().toString(),
+                        snippet = getSolution(problem).snippet,
+                        language = submission.language,
+                        problem = problem,
+                        invocations = cases.filter { it.expected == null }
+                            .map { SubmissionExecutionRequest.Invocation(input = it.input) }
+                    ))
+                        .also { result ->
+                            if (result.status != ExecutionStatus.SUCCESS) {
+                                val error = result.error
+                                    ?.takeIf { it.isNotEmpty() }
+                                    ?: result.invocations?.firstOrNull { it.output.status != InvocationStatus.SUCCESS }?.output?.stdErr
+                                throw InternalError("Failed to get expected results for problem: ${problem.problemId}. $error")
+                            }
+                        }
                 }
-            }
 
-        submission.cases.addAll(
-            inputs.mapIndexed { i, input ->
-                val actualOutput = actual.invocations?.getOrNull(i)
-                val expectedOutput = expected.invocations?.getOrNull(i)
-                SubmissionCase(
-                    caseId = "${submission.submissionId}_$i",
-                    input = input,
-                    expected = expectedOutput?.output.orEmpty(),
-                    actual = actualOutput?.output.orEmpty(),
-                    submissionId = submission.submissionId,
-                    stdOut = actualOutput?.stdOut.orEmpty(),
-                    stdErr = actualOutput?.stdErr.orEmpty(),
-                    status = if (actualOutput?.output == expectedOutput?.output)
-                        SubmissionCaseStatus.PASSED else SubmissionCaseStatus.FAILED
-                )
-            }
-        )
+            submission.cases.addAll(
+                cases.mapIndexed { i, case ->
+                    val actualOutput = actual.invocations?.getOrNull(i)?.output
+                    val expectedOutput = case.expected ?: let {
+                        calculatedExpected?.invocations?.firstOrNull { it.input == case.input }?.output?.output
+                    }
 
-        submission.copy(
-            status = if (submission.cases.all { it.status == SubmissionCaseStatus.PASSED }) ACCEPTED else CASES_FAILED
-        )
+                    SubmissionCase(
+                        caseId = "${submission.submissionId}_$i",
+                        input = case.input,
+                        expected = expectedOutput.orEmpty(),
+                        actual = actualOutput?.output.orEmpty(),
+                        submissionId = submission.submissionId,
+                        stdOut = actualOutput?.stdOut.orEmpty(),
+                        stdErr = actualOutput?.stdErr.orEmpty(),
+                        status = if (actualOutput?.output == expectedOutput)
+                            SubmissionCaseStatus.PASSED else SubmissionCaseStatus.FAILED
+                    )
+                }
+            )
+
+            submission.copy(
+                status = if (submission.cases.all { it.status == SubmissionCaseStatus.PASSED }) ACCEPTED else CASES_FAILED
+            )
+        } else {
+            //todo reason why it failed
+            submission.copy(status = FAILED)
+        }
+        submissionRepository.save(processedSubmission)
     }
-
-    private fun execute(
-        snippet: String,
-        language: Language,
-        problem: Problem,
-        inputs: List<String>
-    ) = executionService.execute(SubmissionExecutionRequest(
-        executionId = UUID.randomUUID().toString(),
-        snippet = snippet,
-        language = language,
-        problem = problem,
-        invocations = inputs.map { input -> SubmissionExecutionRequest.InvocationInput(args = input.split("\n")) }
-    ))
 }
