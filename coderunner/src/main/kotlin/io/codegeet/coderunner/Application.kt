@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import io.codegeet.common.CodeExecutionJobRequest
-import io.codegeet.common.CodeExecutionJobResult
-import io.codegeet.common.ExecutionStatus
+import io.codegeet.common.ExecutionJobRequest
+import io.codegeet.common.ExecutionJobResult
+import io.codegeet.common.ExecutionJobStatus
 
 class Application(private val runner: Runner) {
 
@@ -19,20 +19,20 @@ class Application(private val runner: Runner) {
     fun run(args: Array<String>) {
         val result = try {
             parseInput()?.let { runner.run(it) }
-                ?: CodeExecutionJobResult(
-                    status = ExecutionStatus.INTERNAL_ERROR,
+                ?: ExecutionJobResult(
+                    status = ExecutionJobStatus.INTERNAL_ERROR,
                     error = "Coderunner input is empty."
                 )
         } catch (e: JsonMappingException) {
-            CodeExecutionJobResult(
-                status = ExecutionStatus.INTERNAL_ERROR,
+            ExecutionJobResult(
+                status = ExecutionJobStatus.INTERNAL_ERROR,
                 error = "Failed to parse coderunner input: ${e.message}"
             )
         }
         println(result.toJson())
     }
 
-    private fun parseInput(): CodeExecutionJobRequest? {
+    private fun parseInput(): ExecutionJobRequest? {
         val stringBuilder = StringBuilder()
         while (true) {
             val line = readlnOrNull()
@@ -43,10 +43,10 @@ class Application(private val runner: Runner) {
 
         return stringBuilder.toString()
             .takeIf { it.isNotEmpty() }
-            ?.let { objectMapper.readValue(it, CodeExecutionJobRequest::class.java) }
+            ?.let { objectMapper.readValue(it, ExecutionJobRequest::class.java) }
     }
 
-    private fun CodeExecutionJobResult.toJson(): String =
+    private fun ExecutionJobResult.toJson(): String =
         objectMapper.writeValueAsString(this)
 }
 

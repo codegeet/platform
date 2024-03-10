@@ -1,6 +1,6 @@
 package io.codegeet.coderunner
 
-class Statistics() {
+class Statistics {
 
     companion object {
         private const val REGEX = "\\[(\\d+)\\]\\n?$"

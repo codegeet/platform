@@ -11,8 +11,9 @@
     <modules>
         <module>common</module>
         <module>coderunner</module>
-        <module>platform</module>
         <module>job</module>
+        <module>code</module>
+        <module>problems</module>
     </modules>
 
     <properties>
