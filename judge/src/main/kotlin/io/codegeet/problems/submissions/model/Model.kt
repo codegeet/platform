@@ -1,27 +1,24 @@
-package io.codegeet.problems.executions.model
+package io.codegeet.problems.submissions.model
 
 import io.codegeet.common.Language
-import jakarta.persistence.*
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
 
-@Entity
-@Table(name = "submissions")
+@Document(collection = "submissions")
 data class Submission(
     @Id
     val submissionId: String,
     var problemId: String,
-    @Enumerated(EnumType.STRING)
     val language: Language,
-    @Column(columnDefinition = "TEXT")
     val snippet: String,
-    @Enumerated(EnumType.STRING)
     val status: SubmissionStatus,
-    val runtime: Long,
-    val memory: Long,
+    val runtime: Double?,
+    val memory: Double?,
     val createdAt: Instant,
     val executionId: String,
 )
 
 enum class SubmissionStatus {
-    ACCEPTED, REJECTED, FAILED
+    ACCEPTED, REJECTED, COMPILATION_ERROR, TIMEOUT, ERROR
 }

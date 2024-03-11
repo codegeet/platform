@@ -5,11 +5,11 @@
 
     <parent>
         <groupId>io.codegeet</groupId>
-        <artifactId>judge</artifactId>
+        <artifactId>platform</artifactId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>problems</artifactId>
+    <artifactId>judge</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -24,7 +24,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

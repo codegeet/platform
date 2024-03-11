@@ -3,7 +3,6 @@ package io.codegeet.problems.executions
 import io.codegeet.common.*
 import io.codegeet.problems.exceptions.LanguageNotSupportedException
 import io.codegeet.problems.executions.exceptions.ExecutionNotFoundException
-import io.codegeet.problems.executions.exceptions.SolutionNotFoundException
 import io.codegeet.problems.executions.model.*
 import io.codegeet.problems.executions.resource.ExecutionResource.ExecutionRequest
 import io.codegeet.problems.job.ExecutionJobClient
@@ -44,73 +43,6 @@ class ExecutionService(
 
     fun getExecution(executionId: String): Execution = executionRepository.findByIdOrNull(executionId)
         ?: throw ExecutionNotFoundException("Execution '$executionId' not found.")
-
-    private fun getSolution(problem: Problem) =
-        problem.solution ?: throw SolutionNotFoundException(problem.problemId)
-
-//    private fun execute(
-//        execution: Execution,
-//        cases: List<ExecutionRequest.Case>
-//    ): Execution {
-//        val problem = problemService.get(execution.problemId)
-//
-//        val actual = executionService.execute(ExecutionExecutionRequest(
-//            executionId = UUID.randomUUID().toString(),
-//            snippet = execution.snippet,
-//            language = execution.language,
-//            invocations = cases.map { ExecutionExecutionRequest.Invocation(input = it.input) }
-//        ), problem)
-//
-//        val processedExecution = if (actual.status == ExecutionJobStatus.SUCCESS) {
-//            val calculatedExpected = cases.takeIf { it.any { case -> case.expected == null } }
-//                ?.let {
-//                    executionService.execute(ExecutionExecutionRequest(
-//                        executionId = UUID.randomUUID().toString(),
-//                        snippet = getSolution(problem).snippet,
-//                        language = execution.language,
-//                        invocations = cases.filter { it.expected == null }
-//                            .map { ExecutionExecutionRequest.Invocation(input = it.input) }
-//                    ), problem)
-//                        .also { result ->
-//                            if (result.status != ExecutionJobStatus.SUCCESS) {
-//                                val error = result.error
-//                                    ?.takeIf { it.isNotEmpty() }
-//                                    ?: result.invocations?.firstOrNull { it.output.status != ExecutionJobInvocationStatus.SUCCESS }?.output?.stdErr
-//                                throw InternalError("Failed to get expected results for problem: ${problem.problemId}. $error")
-//                            }
-//                        }
-//                }
-//
-//            execution.cases.addAll(
-//                cases.mapIndexed { i, case ->
-//                    val actualOutput = actual.invocations?.getOrNull(i)?.output
-//                    val expectedOutput = case.expected ?: let {
-//                        calculatedExpected?.invocations?.firstOrNull { it.input == case.input }?.output?.output
-//                    }
-//
-//                    ExecutionCase(
-//                        caseId = "${execution.executionId}_$i",
-//                        input = case.input,
-//                        expected = expectedOutput.orEmpty(),
-//                        actual = actualOutput?.output.orEmpty(),
-//                        executionId = execution.executionId,
-//                        stdOut = actualOutput?.stdOut.orEmpty(),
-//                        stdErr = actualOutput?.stdErr.orEmpty(),
-//                        status = if (actualOutput?.output == expectedOutput)
-//                            ExecutionCaseStatus.PASSED else ExecutionCaseStatus.FAILED
-//                    )
-//                }
-//            )
-//
-//            execution.copy(
-//                status = if (execution.cases.all { it.status == ExecutionCaseStatus.PASSED }) SUCCESS else CASE_FAILURE
-//            )
-//        } else {
-//            //todo reason why it failed
-//            execution.copy(status = actual.status)
-//        }
-//
-//    }
 
     private fun execute(
         execution: Execution,
@@ -159,14 +91,14 @@ class ExecutionService(
                         }
 
                     ExecutionCase(
-                        caseId = "${execution.executionId}_$i",
-                        executionId = execution.executionId,
                         status = if (actual == expected) ExecutionCaseStatus.PASSED else ExecutionCaseStatus.FAILED,
                         input = case.input,
                         expected = expected,
                         actual = actual,
                         stdOut = stdOut,
                         stdErr = stdErr?.takeIf { it.isNotEmpty() } ?: it.error,
+                        runtime = it.details?.duration,
+                        memory = it.details?.memory,
                     )
                 }
 
@@ -182,7 +114,9 @@ class ExecutionService(
         }
 
         return execution.copy(
-            status = if (execution.cases.all { it.status == ExecutionCaseStatus.PASSED }) ExecutionStatus.SUCCESS else ExecutionStatus.CASE_ERROR
+            status = if (execution.cases.all { it.status == ExecutionCaseStatus.PASSED }) ExecutionStatus.SUCCESS else ExecutionStatus.CASE_ERROR,
+            avgMemory = execution.cases.mapNotNull { it.memory }.average(),
+            avgRuntime = execution.cases.mapNotNull { it.runtime }.average()
         )
     }
 
@@ -194,22 +128,23 @@ class ExecutionService(
         if (cases.all { case -> case.expected != null })
             return null
 
-        val solution = getSolution(problem)
-        return executionJobClient.call(
-            ExecutionJobRequest(
-                code = buildExecutionCode(
-                    solution.snippet,
-                    buildExecutionCall(problem, solution.language),
-                    solution.language
-                ),
-                language = solution.language,
-                invocations = cases
-                    .map {
-                        ExecutionJobRequest.InvocationRequest(
-                            arguments = listOf(execution.executionId) + it.input.split("\n")
-                        )
-                    }
-            ))
+        return with(problem.solution) {
+            executionJobClient.call(
+                ExecutionJobRequest(
+                    code = buildExecutionCode(
+                        snippet,
+                        buildExecutionCall(problem, language),
+                        language
+                    ),
+                    language = language,
+                    invocations = cases
+                        .map {
+                            ExecutionJobRequest.InvocationRequest(
+                                arguments = listOf(execution.executionId) + it.input.split("\n")
+                            )
+                        }
+                ))
+        }
     }
 
     private fun getActualResult(

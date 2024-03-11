@@ -1,65 +1,46 @@
 package io.codegeet.problems.problems.model
 
 import io.codegeet.common.Language
-import jakarta.persistence.*
+import org.springframework.data.annotation.Id
+import org.springframework.data.mongodb.core.mapping.Document
 
-@Entity
-@Table(name = "problems")
+@Document(collection = "problems")
 data class Problem(
     @Id
     val problemId: String,
     val name: String,
     val number: Int,
     val description: String,
-    @Enumerated(EnumType.STRING)
     val difficulty: ProblemDifficulty,
-
-    @OneToMany(cascade = [CascadeType.ALL])
     val snippets: MutableList<ProblemSnippet> = mutableListOf(),
-
-    @OneToMany(cascade = [CascadeType.ALL])
     val cases: MutableList<ProblemCase> = mutableListOf(),
-
-    @OneToOne(cascade = [CascadeType.ALL])
-    val solution: ProblemSolution? = null
+    val solution: ProblemSolution,
+    val metadata: Metadata,
 )
 
-@Entity
-@Table(name = "problem_snippets")
 data class ProblemSnippet(
-    @Id
-    val snippetId: String,
-    @Enumerated(EnumType.STRING)
     val language: Language,
-
-    @Column(columnDefinition = "TEXT")
     val snippet: String,
     val call: String,
-
-    val problemId: String
 )
 
-@Entity
-@Table(name = "problem_cases")
 data class ProblemCase(
-    @Id
-    val caseId: String,
     val input: String,
     val expected: String,
-
-    val problemId: String
 )
 
-@Entity
-@Table(name = "problem_solutions")
 data class ProblemSolution(
-    @Id
-    val solutionId: String,
     val problemId: String,
-    @Enumerated(EnumType.STRING)
     val language: Language,
-    @Column(columnDefinition = "TEXT")
     val snippet: String,
+)
+
+data class Metadata(
+    val params: List<MetadataParam>,
+)
+
+data class MetadataParam(
+    val name: String,
 )
 
 enum class ProblemDifficulty {

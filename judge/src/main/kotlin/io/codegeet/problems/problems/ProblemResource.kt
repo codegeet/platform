@@ -47,8 +47,7 @@ class ProblemResource(
         )
 
         data class Case(
-            val input: String,
-            val expected: String?,
+            val input: String
         )
     }
 
@@ -64,6 +63,6 @@ class ProblemResource(
         number = number,
         description = description,
         snippets = snippets.map { ProblemResponse.Snippet(snippet = it.snippet, language = it.language) },
-        cases = cases.map { ProblemResponse.Case(input = it.input, expected = it.expected) }
+        cases = cases.map { ProblemResponse.Case(input = it.input) }
     )
 }
