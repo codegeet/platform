@@ -41,8 +41,14 @@ class ExecutionResource(
     ) {
         data class InvocationOutput(
             val status: ExecutionJobInvocationStatus?,
+            val details: InvocationDetails?,
             val stdOut: String?,
             val stdErr: String?
+        )
+
+        data class InvocationDetails(
+            val runtime: Long?,
+            val memory: Long?,
         )
     }
 
@@ -54,7 +60,8 @@ class ExecutionResource(
             io.codegeet.code.executions.ExecutionResource.ExecutionResponse.InvocationOutput(
                 status = it.status,
                 stdOut = it.stdOut,
-                stdErr = it.stdErr
+                stdErr = it.stdErr,
+                details = ExecutionResponse.InvocationDetails(runtime = it.runtime, memory = it.memory)
             )
         }
     )

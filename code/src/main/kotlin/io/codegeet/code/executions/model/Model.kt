@@ -36,13 +36,13 @@ data class Invocation(
     val executionId: String,
     @Enumerated(EnumType.STRING)
     var status: ExecutionJobInvocationStatus?,
-
     val arguments: String?,
     @Column(columnDefinition = "TEXT")
     val stdIn: String?,
-
     @Column(columnDefinition = "TEXT")
     val stdOut: String? = null,
     @Column(columnDefinition = "TEXT")
     val stdErr: String? = null,
+    val runtime: Long? = null,
+    val memory: Long? = null,
 )

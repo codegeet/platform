@@ -21,7 +21,7 @@ import java.nio.channels.ClosedByInterruptException
 import java.util.concurrent.TimeUnit
 
 @Service
-class CodeExecutionService(
+class ExecutionJobService(
     private val dockerClient: DockerClient,
     private val config: DockerContainerConfiguration,
     private val objectMapper: ObjectMapper

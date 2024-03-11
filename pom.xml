@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.codegeet</groupId>
-    <artifactId>judge</artifactId>
+    <artifactId>platform</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
@@ -13,7 +13,7 @@
         <module>coderunner</module>
         <module>job</module>
         <module>code</module>
-        <module>problems</module>
+        <module>judge</module>
     </modules>
 
     <properties>

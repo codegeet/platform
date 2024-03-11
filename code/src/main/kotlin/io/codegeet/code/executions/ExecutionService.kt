@@ -33,7 +33,9 @@ class ExecutionService(
                     invocation.copy(
                         status = it.status,
                         stdOut = it.stdOut,
-                        stdErr = it.stdErr
+                        stdErr = it.stdErr,
+                        runtime = it.details?.duration,
+                        memory = it.details?.memory
                     )
                 } ?: invocation.copy(
                     status = null,
