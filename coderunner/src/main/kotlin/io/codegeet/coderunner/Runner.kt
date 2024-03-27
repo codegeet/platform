@@ -3,17 +3,17 @@ package io.codegeet.coderunner
 import io.codegeet.coderunner.config.LanguageConfig
 import io.codegeet.coderunner.exceptions.CompilationException
 import io.codegeet.coderunner.exceptions.TimeoutException
+import io.codegeet.common.ExecutionJobInvocationStatus
 import io.codegeet.common.ExecutionJobRequest
 import io.codegeet.common.ExecutionJobResult
 import io.codegeet.common.ExecutionJobStatus
-import io.codegeet.common.ExecutionJobInvocationStatus
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 
-class Runner(private val statistics: Statistics?) {
+class Runner(private val statistics: Statistics, private val time: TimeProvider) {
 
     companion object {
         const val DEFAULT_INVOCATION_TIMEOUT_MILLIS: Long = 5_000
@@ -91,11 +91,11 @@ class Runner(private val statistics: Statistics?) {
         directory: String
     ): ExecutionJobResult.CompilationDetails? {
         try {
-            val command = (statistics?.buildStatisticsCall() ?: emptyList()) + compilationCommand.split(" ")
+            val command = (statistics.buildStatsCall()) + compilationCommand.split(" ")
             val processBuilder = ProcessBuilder(command)
                 .directory(File(directory))
 
-            val startTime = System.nanoTime()
+            val startTime = time.now()
 
             val process = processBuilder.start()
             process.waitFor()
@@ -104,13 +104,13 @@ class Runner(private val statistics: Statistics?) {
             val stdOut = process.inputStream.readAsText()
 
             if (process.exitValue() != 0) {
-                throw CompilationException((statistics?.cleanStatistics(stdErr) ?: stdErr).takeIf { it.isNotEmpty() } ?: stdOut)
+                throw CompilationException((statistics.withoutMemoryStats(stdErr)).takeIf { it.isNotEmpty() } ?: stdOut)
             }
 
-            return if (statistics != null) ExecutionJobResult.CompilationDetails(
-                duration = (System.nanoTime() - startTime) / 1_000_000,
-                memory = statistics.getStatistics(stdErr)
-            ) else null
+            return ExecutionJobResult.CompilationDetails(
+                duration = time.now() - startTime,
+                memory = statistics.getMemoryStats(stdErr)
+            )
 
         } catch (e: CompilationException) {
             throw e
@@ -124,10 +124,10 @@ class Runner(private val statistics: Statistics?) {
         invocation: ExecutionJobRequest.InvocationRequest,
         directory: String,
     ): ExecutionJobResult.InvocationResult {
-        val command = (statistics?.buildStatisticsCall() ?: emptyList()) + invocationCommand.split(" ") + invocation.arguments.orEmpty()
+        val command = (statistics.buildStatsCall()) + invocationCommand.split(" ") + invocation.arguments.orEmpty()
         val processBuilder = ProcessBuilder(command).directory(File(directory))
 
-        val startTime = System.nanoTime()
+        val startTime = time.now()
 
         val process = processBuilder.start()
         writeStdIn(process, invocation.stdIn)
@@ -142,13 +142,12 @@ class Runner(private val statistics: Statistics?) {
 
         return ExecutionJobResult.InvocationResult(
             status = if (process.exitValue() == 0) ExecutionJobInvocationStatus.SUCCESS else ExecutionJobInvocationStatus.INVOCATION_ERROR,
-            details = if (statistics != null)
-                ExecutionJobResult.InvocationDetails(
-                    duration = (System.nanoTime() - startTime) / 1_000_000,
-                    memory = statistics.getStatistics(errorStream),
-                ) else null,
+            details = ExecutionJobResult.InvocationDetails(
+                duration = time.now() - startTime,
+                memory = statistics.getMemoryStats(errorStream),
+            ),
             stdOut = inputStream.takeIf { it.isNotEmpty() },
-            stdErr = (statistics?.cleanStatistics(errorStream) ?: errorStream).takeIf { it.isNotEmpty() },
+            stdErr = (statistics.withoutMemoryStats(errorStream)).takeIf { it.isNotEmpty() },
         )
     }
 

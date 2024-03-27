@@ -6,18 +6,18 @@ class Statistics {
         private const val REGEX = "\\[(\\d+)\\]\\n?$"
     }
 
-    fun buildStatisticsCall(): List<String> = getStatsCliInstalled(
+    fun buildStatsCall(): List<String> = getStatsCliInstalled(
         if (System.getProperty("os.name").lowercase().contains("mac")) "gtime" else "/usr/bin/time"
     )?.let {
         listOf(it, "-f", "[%M]")
     }.orEmpty()
 
-    fun cleanStatistics(input: String): String = REGEX.toRegex()
+    fun withoutMemoryStats(input: String): String = REGEX.toRegex()
         .find(input)?.let {
             input.removeRange(it.range)
         } ?: input
 
-    fun getStatistics(input: String): Long? = REGEX.toRegex()
+    fun getMemoryStats(input: String): Long? = REGEX.toRegex()
         .find(input)
         ?.groups?.get(1)
         ?.value
