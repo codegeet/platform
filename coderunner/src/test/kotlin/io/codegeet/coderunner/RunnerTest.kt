@@ -5,29 +5,32 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.doAnswer
-import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.mock
 
 class RunnerTest {
 
-    private val statistics = mock<Statistics> {
-        on { buildStatsCall() } doReturn emptyList()
-        on { withoutMemoryStats(any()) } doAnswer { it.arguments[0] as String }
-        on { getMemoryStats(any()) } doReturn 100
+    private val processStats = mock<ProcessStats> {
+        on { wrapCommand(any()) } doAnswer { it.arguments[0] as List<String> }
+        on { withMemory(any()) } doAnswer { Pair(it.arguments[0] as String, 100) }
+        on { withTime<Process>(any()) } doAnswer {
+            val block = it.arguments[0] as () -> Process
+            val blockResult = block()
+            Pair(blockResult, 100)
+        }
     }
 
-    private val time = mock<TimeProvider> {
-        on { now() } doReturn 100
-    }
-
-    private val runner = Runner(statistics, time)
+    private val runner = Runner(ProcessExecutor(processStats))
 
     @Test
     fun run() {
         assertEquals(
             result(
                 status = ExecutionJobStatus.SUCCESS,
-                invocation = ExecutionJobResult.InvocationResult(status = ExecutionJobInvocationStatus.SUCCESS)
+                invocation = ExecutionJobResult.InvocationResult(
+                    status = ExecutionJobInvocationStatus.SUCCESS,
+                    stdOut = "",
+                    stdErr = ""
+                )
             ), runner.run(
                 executionRequest("class Main { public static void main(String[] args) { }}")
             )
@@ -41,7 +44,8 @@ class RunnerTest {
                 status = ExecutionJobStatus.SUCCESS,
                 invocation = ExecutionJobResult.InvocationResult(
                     status = ExecutionJobInvocationStatus.SUCCESS,
-                    stdOut = "test"
+                    stdOut = "test",
+                    stdErr = ""
                 )
             ), runner.run(
                 executionRequest("class Main { public static void main(String[] args) { System.out.print(\"test\"); }}")
@@ -56,6 +60,7 @@ class RunnerTest {
                 status = ExecutionJobStatus.SUCCESS,
                 invocation = ExecutionJobResult.InvocationResult(
                     status = ExecutionJobInvocationStatus.SUCCESS,
+                    stdOut = "",
                     stdErr = "test"
                 )
             ), runner.run(
@@ -71,7 +76,8 @@ class RunnerTest {
                 status = ExecutionJobStatus.SUCCESS,
                 invocation = ExecutionJobResult.InvocationResult(
                     status = ExecutionJobInvocationStatus.SUCCESS,
-                    stdOut = "test"
+                    stdOut = "test",
+                    stdErr = ""
                 )
             ), runner.run(
                 executionRequest(
@@ -89,7 +95,8 @@ class RunnerTest {
                 status = ExecutionJobStatus.SUCCESS,
                 invocation = ExecutionJobResult.InvocationResult(
                     status = ExecutionJobInvocationStatus.SUCCESS,
-                    stdOut = "test"
+                    stdOut = "test",
+                    stdErr = "",
                 )
             ), runner.run(
                 executionRequest(
@@ -106,8 +113,9 @@ class RunnerTest {
             result(
                 status = ExecutionJobStatus.INVOCATION_ERROR,
                 invocation = ExecutionJobResult.InvocationResult(
+                    status = ExecutionJobInvocationStatus.INVOCATION_ERROR,
+                    stdOut = "",
                     stdErr = "Exception in thread \"main\" java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0\n\tat Main.main(Main.java:1)\n",
-                    status = ExecutionJobInvocationStatus.INVOCATION_ERROR
                 )
             ), runner.run(
                 executionRequest("class Main { public static void main(String[] args) { System.out.print(args[0]); }}")
@@ -137,10 +145,15 @@ class RunnerTest {
     ) = ExecutionJobResult(
         status = status,
         invocations = invocation
-            ?.let { listOf(invocation.copy(details = ExecutionJobResult.InvocationDetails(0, 100))) }
+            ?.let { listOf(invocation.copy(stats = ExecutionJobResult.Stats(100, 100))) }
             ?: emptyList(),
         error = error,
-        compilation = if (error == null) ExecutionJobResult.CompilationDetails(0, 100) else null
+        compilation = if (error == null) ExecutionJobResult.CompilationResult(
+            ExecutionJobResult.Stats(
+                100,
+                100
+            )
+        ) else null
     )
 
     private fun executionRequest(code: String) = executionRequest(code, emptyList())

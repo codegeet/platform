@@ -29,25 +29,24 @@ data class ExecutionJobRequest(
 
 data class ExecutionJobResult(
     val status: ExecutionJobStatus,
-    val compilation: CompilationDetails? = null,
+    val compilation: CompilationResult? = null,
     val invocations: List<InvocationResult> = emptyList(),
     val error: String? = null,
 ) {
     data class InvocationResult(
         val status: ExecutionJobInvocationStatus,
-        val details: InvocationDetails? = null,
+        val stats: Stats? = null,
         val stdOut: String? = null,
         val stdErr: String? = null,
         val error: String? = null,
     )
 
-    data class InvocationDetails(
-        val duration: Long,
-        val memory: Long? = null
+    data class CompilationResult(
+        val stats: Stats? = null,
     )
 
-    data class CompilationDetails(
-        val duration: Long,
+    data class Stats(
+        val time: Long? = null,
         val memory: Long? = null
     )
 }

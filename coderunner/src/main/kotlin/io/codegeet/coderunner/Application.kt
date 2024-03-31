@@ -51,5 +51,5 @@ class Application(private val runner: Runner) {
 }
 
 fun main(args: Array<String>) {
-    Application(Runner(Statistics(), TimeProvider())).run(args)
+    Application(Runner(ProcessExecutor(stats = ProcessStats))).run(args)
 }
