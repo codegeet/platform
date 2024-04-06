@@ -50,7 +50,7 @@ class ProcessExecutor(private val stats: ProcessStats) {
         return System.getProperty("user.home")
     }
 
-    fun InputStream.readAsString(limit: Int = DEFAULT_OUTPUT_LIMIT_BYTES): String = this.use { inputStream ->
+    private fun InputStream.readAsString(limit: Int = DEFAULT_OUTPUT_LIMIT_BYTES): String = this.use { inputStream ->
         String(inputStream.readNBytes(limit))
             .also {
                 if (inputStream.available() > 0) throw OutputLimitException(limit)
@@ -66,7 +66,8 @@ class ProcessExecutor(private val stats: ProcessStats) {
     )
 }
 
-class OutputLimitException(bytes: Int) : Exception("Process output exceeds limit of $bytes bytes")
+class OutputLimitException(bytes: Int) :
+    Exception("Process output exceeds limit of $bytes bytes")
 
 class TimeLimitException(timeout: Long, timeunit: TimeUnit) :
     Exception("Process did not finish within $timeout ${timeunit.name.lowercase()}")
