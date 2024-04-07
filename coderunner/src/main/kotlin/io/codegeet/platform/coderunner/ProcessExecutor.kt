@@ -1,5 +1,7 @@
-package io.codegeet.coderunner
+package io.codegeet.platform.coderunner
 
+import io.codegeet.platform.coderunner.exceptions.OutputLimitException
+import io.codegeet.platform.coderunner.exceptions.TimeLimitException
 import java.io.File
 import java.io.InputStream
 import java.util.concurrent.TimeUnit
@@ -66,8 +68,3 @@ class ProcessExecutor(private val stats: ProcessStats) {
     )
 }
 
-class OutputLimitException(bytes: Int) :
-    Exception("Process output exceeds limit of $bytes bytes")
-
-class TimeLimitException(timeout: Long, timeunit: TimeUnit) :
-    Exception("Process did not finish within $timeout ${timeunit.name.lowercase()}")

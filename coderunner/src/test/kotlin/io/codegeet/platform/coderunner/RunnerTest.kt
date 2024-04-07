@@ -1,4 +1,4 @@
-package io.codegeet.coderunner
+package io.codegeet.platform.coderunner
 
 import io.codegeet.common.*
 import org.junit.jupiter.api.Assertions.assertEquals

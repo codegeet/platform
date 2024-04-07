@@ -1,4 +1,4 @@
-package io.codegeet.coderunner
+package io.codegeet.platform.coderunner
 
 class TimeProvider {
     fun now() = System.currentTimeMillis()

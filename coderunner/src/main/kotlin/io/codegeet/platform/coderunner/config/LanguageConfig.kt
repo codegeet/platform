@@ -1,4 +1,4 @@
-package io.codegeet.coderunner.config
+package io.codegeet.platform.coderunner.config
 
 import io.codegeet.common.Language
 

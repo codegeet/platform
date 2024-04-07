@@ -1,4 +1,4 @@
-package io.codegeet.coderunner
+package io.codegeet.platform.coderunner
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonMappingException
