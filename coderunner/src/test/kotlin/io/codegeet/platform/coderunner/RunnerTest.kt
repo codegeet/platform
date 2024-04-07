@@ -9,6 +9,7 @@ import org.mockito.kotlin.mock
 
 class RunnerTest {
 
+    @Suppress("UNCHECKED_CAST")
     private val processStats = mock<ProcessStats> {
         on { wrapCommand(any()) } doAnswer { it.arguments[0] as List<String> }
         on { withMemory(any()) } doAnswer { Pair(it.arguments[0] as String, 100) }
