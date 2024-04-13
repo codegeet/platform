@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Coderunner** is a command-line tool that runs inside every Codegeet Docker container 
+**Coderunner** is a command-line tool that runs inside Codegeet Docker containers 
 and used for compiling and running code. 
 When the container starts, **coderunner** reads input from `stdin` in JSON format, 
 compiles and executes the code, and outputs the results to `stdout`, also in JSON format.
@@ -11,51 +11,32 @@ compiles and executes the code, and outputs the results to `stdout`, also in JSO
 ```json
 {
   "code": "print(f\"Hello, CodeGeet!\")",
-  "file_name": "app.py",
-  "instructions": {
-    "exec": "python3 app.py"
-  }
+  "language": "python"
 }
 ```
 
 ### Coderunner Output
 ```json
 {
-  "executions": [
+  "status": "SUCCESS",
+  "invocations": [
     {
-      "std_out": "Hello, CodeGeet!",
-      "std_err": "",
-      "exec_code": 0
+      "status": "SUCCESS",
+      "std_out": "Hello, CodeGeet!\n"
     }
-  ],
-  "error": "",
-  "exec_code": 0
+  ]
 }
 ```
 
 ## Play locally (Linux and MacOS)
 To execute code snippets with **coderunner** on your local machine, 
-you need to have the tools installed for your programming language, 
-such as JDK for Java, Python interpreter for Python, or others as required.  
-To work with JSON **coderunner** uses `jq`, a lightweight and powerful command-line JSON processor.
-You need to install `jq` using the package manager.
-#### MacOS:
-```bash
-brew install jq
-```
-#### Linux:
-```bash
-sudo apt-get install jq
-```
+you need to ...  
 Now you can try to execute some code (please pay attention if you have `python` or `python3`):
 ```bash
 echo '{
   "code": "print(f\"Hello, CodeGeet!\")",
-  "file_name": "app.py",
-  "instructions": {
-    "exec": "python3 app.py"
-  }
-}' | ./coderunner.sh
+  "language": "python"
+}' | java -jar coderunner.jar
 ```
 #### Result:
 ```json

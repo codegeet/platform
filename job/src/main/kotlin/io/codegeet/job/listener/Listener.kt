@@ -1,7 +1,7 @@
 package io.codegeet.job.listener
 
-import io.codegeet.common.ExecutionJobRequest
-import io.codegeet.common.ExecutionJobResult
+import io.codegeet.platform.common.ExecutionRequest
+import io.codegeet.platform.common.ExecutionResult
 import io.codegeet.job.ExecutionJobService
 import io.codegeet.job.config.QueueConfiguration.Companion.RPC_QUEUE_NAME
 import org.apache.commons.logging.LogFactory
@@ -15,7 +15,7 @@ class Listener(
     private val log = LogFactory.getLog(javaClass)
 
     @RabbitListener(queues = [RPC_QUEUE_NAME])
-    fun receive(message: ExecutionJobRequest): ExecutionJobResult {
+    fun receive(message: ExecutionRequest): ExecutionResult {
         log.debug("RPC queue received message")
         return executionJobService.execute(message)
     }

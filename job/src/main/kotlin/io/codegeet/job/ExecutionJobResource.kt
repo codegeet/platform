@@ -1,7 +1,7 @@
 package io.codegeet.job
 
-import io.codegeet.common.ExecutionJobRequest
-import io.codegeet.common.ExecutionJobResult
+import io.codegeet.platform.common.ExecutionRequest
+import io.codegeet.platform.common.ExecutionResult
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -16,7 +16,7 @@ class ExecutionJobResource(
 
     @PostMapping
     @ResponseBody
-    fun post(@RequestBody request: ExecutionJobRequest): ExecutionJobResult {
+    fun post(@RequestBody request: ExecutionRequest): ExecutionResult {
         return executionJobService.execute(request)
     }
 }

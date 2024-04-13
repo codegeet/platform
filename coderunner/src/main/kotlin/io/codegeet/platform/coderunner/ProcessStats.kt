@@ -22,9 +22,9 @@ object ProcessStats {
 
     fun withMemory(output: String): Pair<String, Long?> =
         REGEX.toRegex().findAll(output).lastOrNull()
-            ?.let {
-                val memory = it.groups[1]?.value?.toLongOrNull()
-                val cleanedOutput = it.range.let { output.removeRange(it) } ?: output
+            ?.let { match ->
+                val memory = match.groups[1]?.value?.toLongOrNull()
+                val cleanedOutput = match.range.let { output.removeRange(it) }
                 return Pair(cleanedOutput, memory)
             }
             ?: Pair(output, null)

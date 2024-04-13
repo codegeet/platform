@@ -1,9 +1,9 @@
-package io.codegeet.code.executions
+package io.codegeet.platform.api.executions
 
-import io.codegeet.common.ExecutionJobInvocationStatus
-import io.codegeet.common.ExecutionJobStatus
-import io.codegeet.common.Language
-import io.codegeet.code.executions.model.Execution
+import io.codegeet.platform.common.InvocationStatus
+import io.codegeet.platform.common.ExecutionStatus
+import io.codegeet.platform.common.language.Language
+import io.codegeet.platform.api.executions.model.Execution
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -29,18 +29,18 @@ class ExecutionResource(
     ) {
         data class InvocationInput(
             val stdIn: String? = null,
-            val arguments: List<String>? = null,
+            val args: List<String>? = null,
         )
     }
 
     data class ExecutionResponse(
-        val status: ExecutionJobStatus?,
+        val status: ExecutionStatus?,
         val time: Int?,
         val error: String?,
         val invocations: List<InvocationOutput>?
     ) {
         data class InvocationOutput(
-            val status: ExecutionJobInvocationStatus?,
+            val status: InvocationStatus?,
             val details: InvocationDetails?,
             val stdOut: String?,
             val stdErr: String?
@@ -57,11 +57,11 @@ class ExecutionResource(
         error = this.error,
         time = this.totalTime,
         invocations = this.invocations.map {
-            io.codegeet.code.executions.ExecutionResource.ExecutionResponse.InvocationOutput(
+            io.codegeet.platform.api.executions.ExecutionResource.ExecutionResponse.InvocationOutput(
                 status = it.status,
                 stdOut = it.stdOut,
                 stdErr = it.stdErr,
-                details = ExecutionResponse.InvocationDetails(runtime = it.runtime, memory = it.memory)
+                details = io.codegeet.platform.api.executions.ExecutionResource.ExecutionResponse.InvocationDetails(runtime = it.runtime, memory = it.memory)
             )
         }
     )

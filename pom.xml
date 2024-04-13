@@ -12,13 +12,12 @@
         <module>common</module>
         <module>coderunner</module>
         <module>job</module>
-        <module>code</module>
-        <module>judge</module>
+        <module>api</module>
     </modules>
 
     <properties>
         <java.version>17</java.version>
-        <kotlin.version>1.9.10</kotlin.version>
+        <kotlin.version>1.9.20</kotlin.version>
         <spring.boot.version>3.1.4</spring.boot.version>
     </properties>
 

@@ -1,4 +1,4 @@
-package io.codegeet.code
+package io.codegeet.platform.api
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

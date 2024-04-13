@@ -1,10 +1,10 @@
-package io.codegeet.code.executions
+package io.codegeet.platform.api.executions
 
-import io.codegeet.common.ExecutionJobRequest
-import io.codegeet.code.executions.model.Execution
-import io.codegeet.code.executions.model.ExecutionRepository
-import io.codegeet.code.executions.model.Invocation
-import io.codegeet.code.job.ExecutionJobClient
+import io.codegeet.platform.common.ExecutionRequest
+import io.codegeet.platform.api.executions.model.Execution
+import io.codegeet.platform.api.executions.model.ExecutionRepository
+import io.codegeet.platform.api.executions.model.Invocation
+import io.codegeet.platform.api.job.ExecutionJobClient
 import org.springframework.stereotype.Service
 import java.time.Clock
 import java.time.Instant
@@ -34,7 +34,7 @@ class ExecutionService(
                         status = it.status,
                         stdOut = it.stdOut,
                         stdErr = it.stdErr,
-                        runtime = it.details?.duration,
+                        runtime = it.details?.runtime,
                         memory = it.details?.memory
                     )
                 } ?: invocation.copy(
@@ -62,15 +62,13 @@ class ExecutionService(
         execution.invocations.addAll(this.invocations.takeIf { it.isNotEmpty() }
             ?.map {
                 Invocation(
-                    invocationId = UUID.randomUUID().toString(),
                     executionId = execution.executionId,
                     status = null,
-                    arguments = it.arguments?.joinToString("\n"),
+                    arguments = it.args?.joinToString("\n"),
                     stdIn = it.stdIn,
                 )
             } ?: listOf(
             Invocation(
-                invocationId = UUID.randomUUID().toString(),
                 executionId = execution.executionId,
                 status = null,
                 arguments = null,
@@ -80,12 +78,12 @@ class ExecutionService(
     }
 
     private fun Execution.toJob() =
-        ExecutionJobRequest(
+        ExecutionRequest(
             code = this.code,
             language = this.language,
             invocations = this.invocations.map {
-                ExecutionJobRequest.InvocationRequest(
-                    arguments = it.arguments?.split("\n"),
+                ExecutionRequest.InvocationRequest(
+                    args = it.arguments?.split("\n"),
                     stdIn = it.stdIn
                 )
             },

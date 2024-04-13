@@ -1,4 +1,4 @@
-package io.codegeet.code.config.exceptions
+package io.codegeet.platform.api.config.exceptions
 
 import org.springframework.web.bind.annotation.ControllerAdvice
 

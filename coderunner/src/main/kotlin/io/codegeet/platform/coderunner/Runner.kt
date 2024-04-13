@@ -19,9 +19,9 @@ class Runner(private val processExecutor: ProcessExecutor) {
 
     fun run(input: ExecutionRequest): ExecutionResult {
         return try {
-            val directory = initDirectory(input)
+            initDirectory(input)
             val compilationDetails = compileIfNeeded(input)
-            val invocationResult = invoke(input, directory)
+            val invocationResult = invoke(input)
             ExecutionResult(
                 status = calculateExecutionStatus(invocationResult),
                 compilation = compilationDetails,
@@ -46,11 +46,8 @@ class Runner(private val processExecutor: ProcessExecutor) {
     private fun compileIfNeeded(input: ExecutionRequest): ExecutionResult.CompilationResult? =
         LanguageConfig.get(input.language).compilation?.let { command -> compile(command) }
 
-    private fun invoke(
-        input: ExecutionRequest,
-        directory: String
-    ): List<ExecutionResult.InvocationResult> =
-        (input.invocations.ifEmpty { listOf(ExecutionRequest.InvocationRequest()) })
+    private fun invoke(input: ExecutionRequest): List<ExecutionResult.InvocationResult> =
+        input.invocations.ifEmpty { listOf(ExecutionRequest.InvocationRequest()) }
             .map { invocation ->
                 try {
                     val command = LanguageConfig.get(input.language).invocation

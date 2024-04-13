@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.codegeet.platform.common.ExecutionRequest
 import io.codegeet.platform.common.ExecutionResult
@@ -14,6 +15,7 @@ class Application(private val runner: Runner) {
     private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
         propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
         setSerializationInclusion(JsonInclude.Include.NON_NULL)
+        enable(SerializationFeature.INDENT_OUTPUT)
     }
 
     fun run(args: Array<String>) {

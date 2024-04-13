@@ -18,7 +18,7 @@ class ProcessExecutor(private val stats: ProcessStats) {
     }
 
     fun execute(command: List<String>, input: String?, timeout: Long): ProcessData {
-        val processBuilder = ProcessBuilder(stats.wrapCommand(command) ?: command)
+        val processBuilder = ProcessBuilder(stats.wrapCommand(command))
             .directory(File(getUserHomeDirectory()))
 
         val (process, time) = stats.withTime {

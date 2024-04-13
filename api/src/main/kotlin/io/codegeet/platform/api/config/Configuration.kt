@@ -1,4 +1,4 @@
-package io.codegeet.code.config
+package io.codegeet.platform.api.config
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper

@@ -6,13 +6,14 @@ import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.StreamType
-import io.codegeet.common.ExecutionJobRequest
-import io.codegeet.common.ExecutionJobResult
-import io.codegeet.common.ExecutionJobStatus
+import io.codegeet.platform.common.ExecutionRequest
+import io.codegeet.platform.common.ExecutionResult
+import io.codegeet.platform.common.ExecutionStatus
 import io.codegeet.job.config.DockerConfiguration.DockerContainerConfiguration
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+
 import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
 import java.io.PipedInputStream
@@ -29,7 +30,7 @@ class ExecutionJobService(
     private val log = LogFactory.getLog(javaClass)
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun execute(request: ExecutionJobRequest): ExecutionJobResult {
+    fun execute(request: ExecutionRequest): ExecutionResult {
         return try {
             val containerId = createContainer("codegeet/${request.language.getId()}:latest")
 
@@ -55,8 +56,8 @@ class ExecutionJobService(
 
             buildExecutionResult(callback)
         } catch (e: Exception) {
-            ExecutionJobResult(
-                status = ExecutionJobStatus.INTERNAL_ERROR,
+            ExecutionResult(
+                status = ExecutionStatus.INTERNAL_ERROR,
                 error = "Docker container failure ${e.message}"
             )
         }
@@ -106,16 +107,16 @@ class ExecutionJobService(
             }.id
     }
 
-    private fun buildExecutionResult(callback: ContainerCallback): ExecutionJobResult = try {
+    private fun buildExecutionResult(callback: ContainerCallback): ExecutionResult = try {
         callback.getStdOut()
             .takeIf { it.isNotEmpty() }
-            ?.let { objectMapper.readValue(it, ExecutionJobResult::class.java) }
-            ?: ExecutionJobResult(
-                status = ExecutionJobStatus.INTERNAL_ERROR,
+            ?.let { objectMapper.readValue(it, ExecutionResult::class.java) }
+            ?: ExecutionResult(
+                status = ExecutionStatus.INTERNAL_ERROR,
                 error = callback.getStdErr().takeIf { it.isNotEmpty() } ?: "No stdout from container")
     } catch (e: Exception) {
-        ExecutionJobResult(
-            status = ExecutionJobStatus.INTERNAL_ERROR,
+        ExecutionResult(
+            status = ExecutionStatus.INTERNAL_ERROR,
             error = "Failed to parse container output: ${callback.getStdOut()}"
         )
     }
