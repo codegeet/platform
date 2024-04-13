@@ -1,12 +1,12 @@
 package io.codegeet.platform.coderunner
 
-import io.codegeet.platform.coderunner.config.LanguageConfig
-import io.codegeet.platform.coderunner.exceptions.CompilationException
-import io.codegeet.common.ExecutionJobInvocationStatus
-import io.codegeet.common.ExecutionJobRequest
-import io.codegeet.common.ExecutionJobResult
-import io.codegeet.common.ExecutionJobStatus
-import io.codegeet.platform.coderunner.exceptions.TimeLimitException
+import io.codegeet.platform.coderunner.exception.CompilationException
+import io.codegeet.platform.common.InvocationStatus
+import io.codegeet.platform.common.ExecutionRequest
+import io.codegeet.platform.common.ExecutionResult
+import io.codegeet.platform.common.ExecutionStatus
+import io.codegeet.platform.coderunner.exception.TimeLimitException
+import io.codegeet.platform.common.language.LanguageConfig
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
@@ -17,58 +17,58 @@ class Runner(private val processExecutor: ProcessExecutor) {
         const val DEFAULT_INVOCATION_TIMEOUT_MILLIS: Long = 5_000
     }
 
-    fun run(input: ExecutionJobRequest): ExecutionJobResult {
+    fun run(input: ExecutionRequest): ExecutionResult {
         return try {
             val directory = initDirectory(input)
             val compilationDetails = compileIfNeeded(input)
             val invocationResult = invoke(input, directory)
-            ExecutionJobResult(
+            ExecutionResult(
                 status = calculateExecutionStatus(invocationResult),
                 compilation = compilationDetails,
                 invocations = invocationResult,
             )
         } catch (e: CompilationException) {
-            ExecutionJobResult(
-                status = ExecutionJobStatus.COMPILATION_ERROR,
+            ExecutionResult(
+                status = ExecutionStatus.COMPILATION_ERROR,
                 error = e.message,
             )
         } catch (e: Exception) {
-            ExecutionJobResult(
-                status = ExecutionJobStatus.INTERNAL_ERROR,
+            ExecutionResult(
+                status = ExecutionStatus.INTERNAL_ERROR,
                 error = "Something went wrong during the execution: ${e.message}"
             )
         }
     }
 
-    private fun calculateExecutionStatus(invocationResult: List<ExecutionJobResult.InvocationResult>) =
-        if (invocationResult.all { it.status == ExecutionJobInvocationStatus.SUCCESS }) ExecutionJobStatus.SUCCESS else ExecutionJobStatus.INVOCATION_ERROR
+    private fun calculateExecutionStatus(invocationResult: List<ExecutionResult.InvocationResult>) =
+        if (invocationResult.all { it.status == InvocationStatus.SUCCESS }) ExecutionStatus.SUCCESS else ExecutionStatus.INVOCATION_ERROR
 
-    private fun compileIfNeeded(input: ExecutionJobRequest): ExecutionJobResult.CompilationResult? =
+    private fun compileIfNeeded(input: ExecutionRequest): ExecutionResult.CompilationResult? =
         LanguageConfig.get(input.language).compilation?.let { command -> compile(command) }
 
     private fun invoke(
-        input: ExecutionJobRequest,
+        input: ExecutionRequest,
         directory: String
-    ): List<ExecutionJobResult.InvocationResult> =
-        (input.invocations.ifEmpty { listOf(ExecutionJobRequest.InvocationRequest()) })
+    ): List<ExecutionResult.InvocationResult> =
+        (input.invocations.ifEmpty { listOf(ExecutionRequest.InvocationRequest()) })
             .map { invocation ->
                 try {
                     val command = LanguageConfig.get(input.language).invocation
                     invocation(command, invocation)
                 } catch (e: TimeLimitException) {
-                    ExecutionJobResult.InvocationResult(
-                        status = ExecutionJobInvocationStatus.TIMEOUT,
+                    ExecutionResult.InvocationResult(
+                        status = InvocationStatus.TIMEOUT,
                         error = e.message
                     )
                 } catch (e: Exception) {
-                    ExecutionJobResult.InvocationResult(
-                        status = ExecutionJobInvocationStatus.INTERNAL_ERROR,
+                    ExecutionResult.InvocationResult(
+                        status = InvocationStatus.INTERNAL_ERROR,
                         error = "Something went wrong during the invocation: ${e.message}"
                     )
                 }
             }
 
-    private fun initDirectory(input: ExecutionJobRequest) = try {
+    private fun initDirectory(input: ExecutionRequest) = try {
         val directory = getUserHomeDirectory()
         writeFiles(input.code, directory, LanguageConfig.get(input.language).fileName)
 
@@ -79,7 +79,7 @@ class Runner(private val processExecutor: ProcessExecutor) {
 
     private fun compile(
         compilationCommand: String
-    ): ExecutionJobResult.CompilationResult {
+    ): ExecutionResult.CompilationResult {
         try {
             val process = processExecutor.execute(compilationCommand.split(" "))
 
@@ -87,9 +87,9 @@ class Runner(private val processExecutor: ProcessExecutor) {
                 throw CompilationException(process.stdErr.takeIf { it.isNotEmpty() } ?: process.stdOut)
             }
 
-            return ExecutionJobResult.CompilationResult(
-                stats = ExecutionJobResult.Stats(
-                    time = process.time,
+            return ExecutionResult.CompilationResult(
+                details = ExecutionResult.Details(
+                    runtime = process.time,
                     memory = process.memory
                 )
             )
@@ -102,19 +102,19 @@ class Runner(private val processExecutor: ProcessExecutor) {
 
     private fun invocation(
         invocationCommand: String,
-        invocation: ExecutionJobRequest.InvocationRequest
-    ): ExecutionJobResult.InvocationResult {
+        invocation: ExecutionRequest.InvocationRequest
+    ): ExecutionResult.InvocationResult {
 
         val process = processExecutor.execute(
-            command = invocationCommand.split(" ") + invocation.arguments.orEmpty(),
+            command = invocationCommand.split(" ") + invocation.args.orEmpty(),
             input = invocation.stdIn,
-            timeout = invocation.timeout ?: DEFAULT_INVOCATION_TIMEOUT_MILLIS
+            timeout = DEFAULT_INVOCATION_TIMEOUT_MILLIS
         )
 
-        return ExecutionJobResult.InvocationResult(
-            status = if (process.completed) ExecutionJobInvocationStatus.SUCCESS else ExecutionJobInvocationStatus.INVOCATION_ERROR,
-            stats = ExecutionJobResult.Stats(
-                time = process.time,
+        return ExecutionResult.InvocationResult(
+            status = if (process.completed) InvocationStatus.SUCCESS else InvocationStatus.INVOCATION_ERROR,
+            details = ExecutionResult.Details(
+                runtime = process.time,
                 memory = process.memory,
             ),
             stdOut = process.stdOut,

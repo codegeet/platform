@@ -81,7 +81,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>io.codegeet.coderunner.ApplicationKt</mainClass>
+                                    <mainClass>io.codegeet.platform.coderunner.ApplicationKt</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

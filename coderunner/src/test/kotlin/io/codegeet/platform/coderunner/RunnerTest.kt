@@ -1,6 +1,7 @@
 package io.codegeet.platform.coderunner
 
-import io.codegeet.common.*
+import io.codegeet.platform.common.*
+import io.codegeet.platform.common.language.Language
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -26,9 +27,9 @@ class RunnerTest {
     fun run() {
         assertEquals(
             result(
-                status = ExecutionJobStatus.SUCCESS,
-                invocation = ExecutionJobResult.InvocationResult(
-                    status = ExecutionJobInvocationStatus.SUCCESS,
+                status = ExecutionStatus.SUCCESS,
+                invocation = ExecutionResult.InvocationResult(
+                    status = InvocationStatus.SUCCESS,
                     stdOut = "",
                     stdErr = ""
                 )
@@ -42,9 +43,9 @@ class RunnerTest {
     fun `run with stdOut output`() {
         assertEquals(
             result(
-                status = ExecutionJobStatus.SUCCESS,
-                invocation = ExecutionJobResult.InvocationResult(
-                    status = ExecutionJobInvocationStatus.SUCCESS,
+                status = ExecutionStatus.SUCCESS,
+                invocation = ExecutionResult.InvocationResult(
+                    status = InvocationStatus.SUCCESS,
                     stdOut = "test",
                     stdErr = ""
                 )
@@ -58,9 +59,9 @@ class RunnerTest {
     fun `run with stdErr output`() {
         assertEquals(
             result(
-                status = ExecutionJobStatus.SUCCESS,
-                invocation = ExecutionJobResult.InvocationResult(
-                    status = ExecutionJobInvocationStatus.SUCCESS,
+                status = ExecutionStatus.SUCCESS,
+                invocation = ExecutionResult.InvocationResult(
+                    status = InvocationStatus.SUCCESS,
                     stdOut = "",
                     stdErr = "test"
                 )
@@ -74,16 +75,16 @@ class RunnerTest {
     fun `run with arguments`() {
         assertEquals(
             result(
-                status = ExecutionJobStatus.SUCCESS,
-                invocation = ExecutionJobResult.InvocationResult(
-                    status = ExecutionJobInvocationStatus.SUCCESS,
+                status = ExecutionStatus.SUCCESS,
+                invocation = ExecutionResult.InvocationResult(
+                    status = InvocationStatus.SUCCESS,
                     stdOut = "test",
                     stdErr = ""
                 )
             ), runner.run(
                 executionRequest(
                     "class Main { public static void main(String[] args) { System.out.print(args[0]); }}",
-                    listOf(ExecutionJobRequest.InvocationRequest(arguments = listOf("test")))
+                    listOf(ExecutionRequest.InvocationRequest(args = listOf("test")))
                 )
             )
         )
@@ -93,16 +94,16 @@ class RunnerTest {
     fun `run with stdIn`() {
         assertEquals(
             result(
-                status = ExecutionJobStatus.SUCCESS,
-                invocation = ExecutionJobResult.InvocationResult(
-                    status = ExecutionJobInvocationStatus.SUCCESS,
+                status = ExecutionStatus.SUCCESS,
+                invocation = ExecutionResult.InvocationResult(
+                    status = InvocationStatus.SUCCESS,
                     stdOut = "test",
                     stdErr = "",
                 )
             ), runner.run(
                 executionRequest(
                     "import java.util.Scanner; class Main { public static void main(String[] args) { System.out.print(new Scanner(System.in).nextLine()); }}",
-                    listOf(ExecutionJobRequest.InvocationRequest(stdIn = "test"))
+                    listOf(ExecutionRequest.InvocationRequest(stdIn = "test"))
                 )
             )
         )
@@ -112,9 +113,9 @@ class RunnerTest {
     fun `run invocation code exception`() {
         assertEquals(
             result(
-                status = ExecutionJobStatus.INVOCATION_ERROR,
-                invocation = ExecutionJobResult.InvocationResult(
-                    status = ExecutionJobInvocationStatus.INVOCATION_ERROR,
+                status = ExecutionStatus.INVOCATION_ERROR,
+                invocation = ExecutionResult.InvocationResult(
+                    status = InvocationStatus.INVOCATION_ERROR,
                     stdOut = "",
                     stdErr = "Exception in thread \"main\" java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0\n\tat Main.main(Main.java:1)\n",
                 )
@@ -128,7 +129,7 @@ class RunnerTest {
     fun `run invocation compilation exception`() {
         assertEquals(
             result(
-                status = ExecutionJobStatus.COMPILATION_ERROR,
+                status = ExecutionStatus.COMPILATION_ERROR,
                 error = "Main.java:1: error: not a statement\n" +
                         "class Main { public static void main(String[] args) { wft; }}\n" +
                         "                                                      ^\n" +
@@ -140,17 +141,17 @@ class RunnerTest {
     }
 
     private fun result(
-        status: ExecutionJobStatus,
-        invocation: ExecutionJobResult.InvocationResult? = null,
+        status: ExecutionStatus,
+        invocation: ExecutionResult.InvocationResult? = null,
         error: String? = null
-    ) = ExecutionJobResult(
+    ) = ExecutionResult(
         status = status,
         invocations = invocation
-            ?.let { listOf(invocation.copy(stats = ExecutionJobResult.Stats(100, 100))) }
+            ?.let { listOf(invocation.copy(details = ExecutionResult.Details(100, 100))) }
             ?: emptyList(),
         error = error,
-        compilation = if (error == null) ExecutionJobResult.CompilationResult(
-            ExecutionJobResult.Stats(
+        compilation = if (error == null) ExecutionResult.CompilationResult(
+            ExecutionResult.Details(
                 100,
                 100
             )
@@ -159,8 +160,8 @@ class RunnerTest {
 
     private fun executionRequest(code: String) = executionRequest(code, emptyList())
 
-    private fun executionRequest(code: String, invocations: List<ExecutionJobRequest.InvocationRequest>) =
-        ExecutionJobRequest(
+    private fun executionRequest(code: String, invocations: List<ExecutionRequest.InvocationRequest>) =
+        ExecutionRequest(
             code = code,
             language = Language.JAVA,
             invocations = invocations

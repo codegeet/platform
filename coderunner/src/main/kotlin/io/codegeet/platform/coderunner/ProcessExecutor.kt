@@ -1,7 +1,7 @@
 package io.codegeet.platform.coderunner
 
-import io.codegeet.platform.coderunner.exceptions.OutputLimitException
-import io.codegeet.platform.coderunner.exceptions.TimeLimitException
+import io.codegeet.platform.coderunner.exception.OutputLimitException
+import io.codegeet.platform.coderunner.exception.TimeLimitException
 import java.io.File
 import java.io.InputStream
 import java.util.concurrent.TimeUnit

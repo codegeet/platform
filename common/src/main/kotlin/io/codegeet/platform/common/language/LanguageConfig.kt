@@ -1,6 +1,4 @@
-package io.codegeet.platform.coderunner.config
-
-import io.codegeet.common.Language
+package io.codegeet.platform.common.language
 
 object LanguageConfig {
 

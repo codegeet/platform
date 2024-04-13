@@ -1,4 +1,4 @@
-package io.codegeet.platform.coderunner.exceptions
+package io.codegeet.platform.coderunner.exception
 
 import java.util.concurrent.TimeUnit
 

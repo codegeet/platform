@@ -1,3 +1,3 @@
-package io.codegeet.platform.coderunner.exceptions
+package io.codegeet.platform.coderunner.exception
 
 class CompilationException(message: String) : Exception(message)
