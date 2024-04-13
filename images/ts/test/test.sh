@@ -2,15 +2,10 @@
 
 echo '{
   "code": "console.log(`Hello, ${process.argv[2]}!`);",
-  "file_name": "app.ts",
-  "instructions": {
-    "compile": "tsc app.ts",
-    "exec": "node app.js"
-  },
-  "executions": [
+  "language": "ts",
+  "invocations": [
     {
-      "args": "CodeGeet",
-      "std_in": ""
+      "args": ["CodeGeet"]
     }
   ]
 }' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/ts:latest

@@ -2,14 +2,10 @@
 
 echo '{
   "code": "console.log(`Hello, ${process.argv[2]}!`);",
-  "file_name": "app.js",
-  "instructions": {
-    "exec": "node app.js"
-  },
-  "executions": [
+  "language": "js",
+  "invocations": [
     {
-      "args": "CodeGeet",
-      "std_in": ""
+      "args": ["CodeGeet"]
     }
   ]
 }' | docker run --rm -i -u codegeet -w /home/codegeet codegeet/js:latest
