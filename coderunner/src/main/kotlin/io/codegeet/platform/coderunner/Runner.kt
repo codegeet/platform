@@ -49,19 +49,20 @@ class Runner(private val processExecutor: ProcessExecutor) {
     private fun invoke(input: ExecutionRequest): List<ExecutionResult.InvocationResult> =
         input.invocations.ifEmpty { listOf(ExecutionRequest.InvocationRequest()) }
             .map { invocation ->
-                try {
+                runCatching {
                     val command = LanguageConfig.get(input.language).invocation
                     invocation(command, invocation)
-                } catch (e: TimeLimitException) {
-                    ExecutionResult.InvocationResult(
-                        status = InvocationStatus.TIMEOUT,
-                        error = e.message
-                    )
-                } catch (e: Exception) {
-                    ExecutionResult.InvocationResult(
-                        status = InvocationStatus.INTERNAL_ERROR,
-                        error = "Something went wrong during the invocation: ${e.message}"
-                    )
+                }.getOrElse { e ->
+                    when (e) {
+                        is TimeLimitException -> ExecutionResult.InvocationResult(
+                            status = InvocationStatus.TIMEOUT,
+                            error = e.message
+                        )
+                        else -> ExecutionResult.InvocationResult(
+                            status = InvocationStatus.INTERNAL_ERROR,
+                            error = "Something went wrong during the invocation: ${e.message}"
+                        )
+                    }
                 }
             }
 

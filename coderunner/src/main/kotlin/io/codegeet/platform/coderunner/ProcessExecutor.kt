@@ -67,4 +67,3 @@ class ProcessExecutor(private val stats: ProcessStats) {
         val completed: Boolean,
     )
 }
-

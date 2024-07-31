@@ -1,5 +1,7 @@
 package io.codegeet.platform.coderunner
 
+import java.lang.Exception
+
 object ProcessStats {
 
     private const val REGEX = "\\[(\\d+)\\]\\n?$"
@@ -29,17 +31,24 @@ object ProcessStats {
             }
             ?: Pair(output, null)
 
-    private fun buildStatsCall(): List<String> = getStatsCliInstalled(
-        if (System.getProperty("os.name").lowercase().contains("mac")) "gtime" else "/usr/bin/time"
-    )?.let {
-        listOf(it, "-f", "[%M]")
-    }.orEmpty()
+    private fun buildStatsCall(): List<String> {
+        val command = when {
+            getOsName().contains("mac") -> "gtime"
+            else -> "/usr/bin/time"
+        }
+
+        return getStatsCliInstalled(command)
+            ?.let { listOf(it, "-f", "[%M]") }
+            .orEmpty()
+    }
+
+    private fun getOsName() = System.getProperty("os.name").lowercase()
 
     private fun getStatsCliInstalled(name: String): String? {
         return try {
             ProcessBuilder(listOf(name, "--h")).start().waitFor()
             name
-        } catch (e: java.lang.Exception) {
+        } catch (e: Exception) {
             null
         }
     }
