@@ -7,7 +7,7 @@ and used for compiling and running code.
 When the container starts, **coderunner** reads input from `stdin` in JSON format, 
 compiles and executes the code, and outputs the results to `stdout`, also in JSON format.
 
-### Coderunner Input
+### Json Input
 ```json
 {
   "code": "print(f\"Hello, CodeGeet!\")",
@@ -15,7 +15,7 @@ compiles and executes the code, and outputs the results to `stdout`, also in JSO
 }
 ```
 
-### Coderunner Output
+### Json Output
 ```json
 {
   "status": "SUCCESS",
@@ -28,10 +28,9 @@ compiles and executes the code, and outputs the results to `stdout`, also in JSO
 }
 ```
 
-## Play locally (Linux and MacOS)
-To execute code snippets with **coderunner** on your local machine, 
-you need to ...  
-Now you can try to execute some code (please pay attention if you have `python` or `python3`):
+## Run locally (Linux and MacOS)
+To execute code snippets using **coderunner** on your local machine, ensure you have installed the necessary dependencies for the language you want to run (e.g., install a Python interpreter for Python).  
+Once dependencies are installed, you can try executing some code. For example, to run a Python snippet, use the following command:
 ```bash
 echo '{
   "code": "print(f\"Hello, CodeGeet!\")",
@@ -41,24 +40,23 @@ echo '{
 #### Result:
 ```json
 {
-  "executions": [
+  "status" : "SUCCESS",
+  "invocations" : [
     {
-      "std_out": "Hello, CodeGeet!"
-    }
-  ]
+      "status" : "SUCCESS",
+      "std_out" : "Hello, CodeGeet!\n",
+      "std_err" : ""
+    }]
 }
 ```
-With **coderunner** your code can read from `std_in` and use command line `args`:
+Your code can read from `std_in` and use command line `args`:
 
 #### std_in:
 ```bash
 echo '{
   "code": "print(f\"Hello, {input()}!\")",
-  "file_name": "app.py",
-  "instructions": {
-    "exec": "python3 app.py"
-  },
-  "executions": [
+  "language": "python",
+  "invocations": [
     {
       "std_in": "CodeGeet"
     }
@@ -69,11 +67,8 @@ echo '{
 ```bash
 echo '{
   "code": "import sys; print(f\"Hello, {sys.argv[1]}!\")",
-  "file_name": "app.py",
-  "instructions": {
-    "exec": "python3 app.py"
-  },
-  "executions": [
+  "language": "python",
+  "invocations": [
     {
       "args": ["CodeGeet"]
     }
@@ -89,17 +84,13 @@ Additionally, you can have multiple executions of compiled code:
 ```bash
 echo '{
   "code": "class Main { public static void main(String[] args) { System.out.print(args[0]); }}",
-  "file_name": "Main.java",
-  "instructions": {
-    "compile": "javac Main.java",
-    "exec": "java Main"
-  },
-  "executions": [
+  "language": "java",
+  "invocations": [
     {
-      "args": "one"
+      "args": ["one"]
     },
     {
-      "args": "another"
+      "args": ["another"]
     }
   ]
 }' | ./coderunner.sh
@@ -107,37 +98,54 @@ echo '{
 #### Output
 ```json:
 {
-  "executions": [
-    {
-      "std_out": "one",
-      "std_err": "",
-      "exec_code": 0
-    },
-    {
-      "std_out": "another",
-      "std_err": "",
-      "exec_code": 0
+  "status" : "SUCCESS",
+  "invocations" : [ {
+    "status" : "SUCCESS",
+    "std_out" : "one",
+    "std_err" : ""
+  }, {
+    "status" : "SUCCESS",
+    "std_out" : "another",
+    "std_err" : ""
+  } ]
+}
+````
+### Statistics
+If you have `/usr/bin/time` installed on Linux or `gtime` on Mac, **coderunner** will return memory statistics for the execution:
+```json:
+{
+  "status" : "SUCCESS",
+  "compilation" : {
+    "details" : {
+      "runtime" : 251,
+      "memory" : 78672
     }
-  ],
-  "error": "",
-  "exec_code": 0
+  },
+  "invocations" : [ {
+    "status" : "SUCCESS",
+    "details" : {
+      "runtime" : 48,
+      "memory" : 34880
+    },
+    "std_out" : "one",
+    "std_err" : ""
+  }, {
+    "status" : "SUCCESS",
+    "details" : {
+      "runtime" : 48,
+      "memory" : 35040
+    },
+    "std_out" : "another",
+    "std_err" : ""
+  } ]
 }
 ````
 
-### Author
+You can install `/usr/bin/time` or `gtime` by running:
 
-As the author was not much familiar with Bash scripting, so **coderunner** has been written by ChatGPT.  
-
-#### Prompt: 
-```txt
-Please help me write a shell script 
-that takes JSON as input (example provided), 
-saves the "code" to a file, and then runs 
-`instructions.compile` and `instructions.exec`. 
-
-I want it to accept input from stdin 
-and return the output (example provided).
-Also, please include a measurement 
-of how much time it took to execute the code 
-and return this information in the JSON output.
-```
+```bash
+brew install gnu-time
+````
+```bash
+sudo apt install time
+````
