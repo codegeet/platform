@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.ResponseBody
 
 @Controller
 @RequestMapping("api/executions")
-class ExecutionJobResource(
-    private val executionJobService: ExecutionJobService
+class JobResource(
+    private val service: JobService
 ) {
 
     @PostMapping
     @ResponseBody
     fun post(@RequestBody request: ExecutionRequest): ExecutionResult {
-        return executionJobService.execute(request)
+        return service.execute(request)
     }
 }

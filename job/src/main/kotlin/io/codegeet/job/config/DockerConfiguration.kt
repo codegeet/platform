@@ -4,16 +4,15 @@ import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
-import io.codegeet.job.config.DockerConfiguration.DockerContainerConfiguration
+import io.codegeet.job.config.DockerConfiguration.DockerConfig
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.core.env.Environment
 import java.time.Duration
 
 @Configuration
-@EnableConfigurationProperties(DockerContainerConfiguration::class)
+@EnableConfigurationProperties(DockerConfig::class)
 class DockerConfiguration() {
 
     @Bean
@@ -40,7 +39,7 @@ class DockerConfiguration() {
     }
 
     @ConfigurationProperties(prefix = "app.docker.container")
-    data class DockerContainerConfiguration(
+    data class DockerConfig(
         val memory: Long,
         val cpuPeriod: Long,
         val cpuQuota: Long,

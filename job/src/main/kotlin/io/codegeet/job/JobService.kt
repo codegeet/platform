@@ -3,17 +3,19 @@ package io.codegeet.job
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
+import com.github.dockerjava.api.command.PullImageResultCallback
+import com.github.dockerjava.api.exception.NotFoundException
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.StreamType
+import io.codegeet.job.config.DockerConfiguration.DockerConfig
 import io.codegeet.platform.common.ExecutionRequest
 import io.codegeet.platform.common.ExecutionResult
 import io.codegeet.platform.common.ExecutionStatus
-import io.codegeet.job.config.DockerConfiguration.DockerContainerConfiguration
+import io.codegeet.platform.common.language.Language
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-
 import org.apache.commons.logging.LogFactory
 import org.springframework.stereotype.Service
 import java.io.PipedInputStream
@@ -22,17 +24,17 @@ import java.nio.channels.ClosedByInterruptException
 import java.util.concurrent.TimeUnit
 
 @Service
-class ExecutionJobService(
+class JobService(
     private val dockerClient: DockerClient,
-    private val config: DockerContainerConfiguration,
+    private val config: DockerConfig,
     private val objectMapper: ObjectMapper
 ) {
     private val log = LogFactory.getLog(javaClass)
 
     @OptIn(DelicateCoroutinesApi::class)
     fun execute(request: ExecutionRequest): ExecutionResult {
-        return try {
-            val containerId = createContainer("codegeet/${request.language.getId()}:latest")
+        return runCatching {
+            val containerId = createContainer(getImageName(request.language))
 
             val callback = ContainerCallback(containerId)
 
@@ -55,12 +57,29 @@ class ExecutionJobService(
             }
 
             buildExecutionResult(callback)
-        } catch (e: Exception) {
-            ExecutionResult(
-                status = ExecutionStatus.INTERNAL_ERROR,
-                error = "Docker container failure ${e.message}"
-            )
+        }.getOrElse { e ->
+            when (e) {
+                is NotFoundException -> {
+                    GlobalScope.launch { pull(request.language) }
+
+                    ExecutionResult(
+                        status = ExecutionStatus.INTERNAL_ERROR,
+                        error = "Docker image ${request.language} is not found."
+                    )
+                }
+
+                else -> {
+                    ExecutionResult(
+                        status = ExecutionStatus.INTERNAL_ERROR,
+                        error = "Docker container failure ${e.message}"
+                    )
+                }
+            }
         }
+    }
+
+    private fun pull(language: Language) {
+        dockerClient.pullImageCmd(getImageName(language)).exec(PullImageResultCallback()).awaitCompletion()
     }
 
     private fun attachContainer(
@@ -169,4 +188,6 @@ class ExecutionJobService(
         fun getStdOut(): String = stdOutBuilder.toString()
         fun getStdErr(): String = stdErrBuilder.toString()
     }
+
+    private fun getImageName(language: Language) = "codegeet/${language.getId()}:latest"
 }
