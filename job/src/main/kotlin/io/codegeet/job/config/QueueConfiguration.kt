@@ -6,10 +6,12 @@ import org.springframework.amqp.core.Queue
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory
 import org.springframework.amqp.rabbit.connection.ConnectionFactory
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
+@ConditionalOnProperty(name = ["app.job.enabled"], havingValue = "true", matchIfMissing = true)
 class QueueConfiguration() {
 
     companion object {
@@ -26,7 +28,7 @@ class QueueConfiguration() {
         Jackson2JsonMessageConverter(ObjectMapper().registerModule(KotlinModule.Builder().build()))
 
     @Bean
-    fun rabbitListenerContainerFactory(connectionFactory: ConnectionFactory) =
+    fun listenerContainerFactory(connectionFactory: ConnectionFactory) =
         SimpleRabbitListenerContainerFactory().also {
             it.setConnectionFactory(connectionFactory)
             it.setMessageConverter(jackson2JsonMessageConverter())
