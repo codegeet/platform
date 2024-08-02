@@ -57,11 +57,11 @@ class ExecutionResource(
         error = this.error,
         time = this.totalTime,
         invocations = this.invocations.map {
-            io.codegeet.platform.api.executions.ExecutionResource.ExecutionResponse.InvocationOutput(
+           ExecutionResponse.InvocationOutput(
                 status = it.status,
                 stdOut = it.stdOut,
                 stdErr = it.stdErr,
-                details = io.codegeet.platform.api.executions.ExecutionResource.ExecutionResponse.InvocationDetails(runtime = it.runtime, memory = it.memory)
+                details = ExecutionResponse.InvocationDetails(runtime = it.runtime, memory = it.memory)
             )
         }
     )
