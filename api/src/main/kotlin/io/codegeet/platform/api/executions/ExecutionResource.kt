@@ -1,9 +1,10 @@
 package io.codegeet.platform.api.executions
 
-import io.codegeet.platform.common.InvocationStatus
-import io.codegeet.platform.common.ExecutionStatus
-import io.codegeet.platform.common.language.Language
 import io.codegeet.platform.api.executions.model.Execution
+import io.codegeet.platform.common.ExecutionStatus
+import io.codegeet.platform.common.InvocationStatus
+import io.codegeet.platform.common.language.Language
+import mu.KotlinLogging
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -15,10 +16,13 @@ import org.springframework.web.bind.annotation.ResponseBody
 class ExecutionResource(
     private val executionService: ExecutionService
 ) {
+    private val logger = KotlinLogging.logger {}
 
     @PostMapping
     @ResponseBody
     fun post(@RequestBody request: ExecutionRequest): ExecutionResponse {
+        logger.info { "Received execution request for: ${request.language}" }
+
         return executionService.execute(request).toResponse()
     }
 
@@ -57,7 +61,7 @@ class ExecutionResource(
         error = this.error,
         time = this.totalTime,
         invocations = this.invocations.map {
-           ExecutionResponse.InvocationOutput(
+            ExecutionResponse.InvocationOutput(
                 status = it.status,
                 stdOut = it.stdOut,
                 stdErr = it.stdErr,

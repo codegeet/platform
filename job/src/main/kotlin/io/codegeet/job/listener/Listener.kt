@@ -1,10 +1,10 @@
 package io.codegeet.job.listener
 
-import io.codegeet.platform.common.ExecutionRequest
-import io.codegeet.platform.common.ExecutionResult
 import io.codegeet.job.JobService
 import io.codegeet.job.config.QueueConfiguration.Companion.RPC_QUEUE_NAME
-import org.apache.commons.logging.LogFactory
+import io.codegeet.platform.common.ExecutionRequest
+import io.codegeet.platform.common.ExecutionResult
+import mu.KotlinLogging
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component
 class Listener(
     private val executionJobService: JobService
 ) {
-    private val log = LogFactory.getLog(javaClass)
+    private val logger = KotlinLogging.logger {}
 
     @RabbitListener(queues = [RPC_QUEUE_NAME])
     fun receive(message: ExecutionRequest): ExecutionResult {
-        log.debug("RPC queue received message for: ${message.language}")
+        logger.info("Queue received message for: ${message.language}")
         return executionJobService.execute(message)
     }
 }

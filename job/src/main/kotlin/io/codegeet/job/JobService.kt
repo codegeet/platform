@@ -16,12 +16,14 @@ import io.codegeet.platform.common.language.Language
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import org.apache.commons.logging.LogFactory
+import mu.KotlinLogging
 import org.springframework.stereotype.Service
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.nio.channels.ClosedByInterruptException
 import java.util.concurrent.TimeUnit
+
+private val logger = KotlinLogging.logger {}
 
 @Service
 class JobService(
@@ -29,7 +31,6 @@ class JobService(
     private val config: DockerConfig,
     private val objectMapper: ObjectMapper
 ) {
-    private val log = LogFactory.getLog(javaClass)
 
     @OptIn(DelicateCoroutinesApi::class)
     fun execute(request: ExecutionRequest): ExecutionResult {
@@ -107,7 +108,7 @@ class JobService(
         try {
             dockerClient.stopContainerCmd(containerId).exec()
         } catch (e: Exception) {
-            log.debug("Failed to stop container: $containerId")
+            // logger.debug("Failed to stop container: $containerId")
         }
     }
 
@@ -121,8 +122,8 @@ class JobService(
             .withStdInOnce(true)
             .withHostConfig(hostConfig)
             .exec()
-            .also {
-                it.warnings.forEach { log.warn(it) }
+            .also { response ->
+                response.warnings.forEach { logger.warn(it) }
             }.id
     }
 
@@ -141,8 +142,6 @@ class JobService(
     }
 
     private class ContainerCallback(val containerId: String) : ResultCallback.Adapter<Frame>() {
-        private val log = LogFactory.getLog(javaClass)
-
         private val stdOutBuilder = StringBuilder()
         private val stdErrBuilder = StringBuilder()
 
@@ -150,21 +149,20 @@ class JobService(
             when (frame.streamType) {
                 StreamType.STDOUT, StreamType.RAW -> {
                     String(frame.payload).let {
-                        log.debug("STDOUT $containerId: $it")
                         stdOutBuilder.append(it)
                     }
                 }
 
                 StreamType.STDERR -> {
                     String(frame.payload).let {
-                        log.debug("STDERR $containerId: $it")
+                        logger.error { "STDERR $containerId: $it" }
                         stdErrBuilder.append(it)
                     }
                 }
 
                 StreamType.STDIN -> {
                     String(frame.payload).let {
-                        log.debug("STDIN $containerId: $it")
+                        // log
                     }
                 }
 
@@ -175,12 +173,12 @@ class JobService(
         override fun onError(throwable: Throwable) {
             if (throwable is ClosedByInterruptException)
                 "Container may have been stopped by timeout".let {
-                    log.debug(it)
+                    logger.debug { it }
                     stdErrBuilder.append(it)
                 }
             else
                 "Error during container execution: ${throwable.message ?: "unknown"}".let {
-                    log.debug(it)
+                    logger.debug { it }
                     stdErrBuilder.append(it)
                 }
         }
