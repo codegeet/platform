@@ -23,14 +23,15 @@ import java.io.PipedOutputStream
 import java.nio.channels.ClosedByInterruptException
 import java.util.concurrent.TimeUnit
 
-private val logger = KotlinLogging.logger {}
-
 @Service
-class JobService(
+class ExecutionService(
     private val dockerClient: DockerClient,
     private val config: DockerConfig,
     private val objectMapper: ObjectMapper
 ) {
+    companion object {
+        private val logger = KotlinLogging.logger {}
+    }
 
     @OptIn(DelicateCoroutinesApi::class)
     fun execute(request: ExecutionRequest): ExecutionResult {
@@ -162,7 +163,7 @@ class JobService(
 
                 StreamType.STDIN -> {
                     String(frame.payload).let {
-                        // log
+                        // log ?
                     }
                 }
 

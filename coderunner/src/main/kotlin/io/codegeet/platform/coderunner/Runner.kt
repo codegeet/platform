@@ -1,11 +1,11 @@
 package io.codegeet.platform.coderunner
 
 import io.codegeet.platform.coderunner.exception.CompilationException
-import io.codegeet.platform.common.InvocationStatus
+import io.codegeet.platform.coderunner.exception.TimeLimitException
 import io.codegeet.platform.common.ExecutionRequest
 import io.codegeet.platform.common.ExecutionResult
 import io.codegeet.platform.common.ExecutionStatus
-import io.codegeet.platform.coderunner.exception.TimeLimitException
+import io.codegeet.platform.common.InvocationStatus
 import io.codegeet.platform.common.language.LanguageConfig
 import java.nio.file.Files
 import java.nio.file.Path
@@ -58,6 +58,7 @@ class Runner(private val processExecutor: ProcessExecutor) {
                             status = InvocationStatus.TIMEOUT,
                             error = e.message
                         )
+
                         else -> ExecutionResult.InvocationResult(
                             status = InvocationStatus.INTERNAL_ERROR,
                             error = "Something went wrong during the invocation: ${e.message}"

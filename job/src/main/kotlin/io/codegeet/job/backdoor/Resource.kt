@@ -1,5 +1,6 @@
-package io.codegeet.job
+package io.codegeet.job.backdoor
 
+import io.codegeet.job.ExecutionService
 import io.codegeet.platform.common.ExecutionRequest
 import io.codegeet.platform.common.ExecutionResult
 import org.springframework.stereotype.Controller
@@ -10,9 +11,7 @@ import org.springframework.web.bind.annotation.ResponseBody
 
 @Controller
 @RequestMapping("api/executions")
-class JobResource(
-    private val service: JobService
-) {
+class Resource(private val service: ExecutionService) {
 
     @PostMapping
     @ResponseBody
