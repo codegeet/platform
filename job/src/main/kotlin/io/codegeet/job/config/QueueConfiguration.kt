@@ -30,9 +30,7 @@ class QueueConfiguration {
     // handle requests
 
     @Bean(name = ["requestQueue"])
-    fun requestQueue(config: RequestQueueConfig): Queue {
-        return Queue(config.name, false)
-    }
+    fun requestQueue(config: RequestQueueConfig): Queue = Queue(config.name, false)
 
     @Bean
     fun simpleMessageListenerContainer(
@@ -50,39 +48,29 @@ class QueueConfiguration {
         }
 
     @Bean
-    fun messageListenerAdapter(receiver: QueueService, messageConverter: MessageConverter): MessageListenerAdapter {
-        val adapter = MessageListenerAdapter(receiver, QueueService.RECEIVE_METHOD_NAME)
-        adapter.setMessageConverter(messageConverter)
-        return adapter
-    }
+    fun messageListenerAdapter(receiver: QueueService, messageConverter: MessageConverter): MessageListenerAdapter =
+        MessageListenerAdapter(receiver, QueueService.RECEIVE_METHOD_NAME).also {
+            it.setMessageConverter(messageConverter)
+        }
 
     // handle replies
 
     @Bean(name = ["replyQueue"])
-    fun replyQueue(config: ReplyQueueConfig): Queue {
-        return Queue(config.name, false)
-    }
+    fun replyQueue(config: ReplyQueueConfig): Queue = Queue(config.name, false)
 
     @Bean
-    fun replyExchange(config: ReplyQueueConfig): DirectExchange {
-        return DirectExchange(config.exchange)
-    }
+    fun replyExchange(config: ReplyQueueConfig): DirectExchange = DirectExchange(config.exchange)
 
     @Bean(name = ["replyBinding"])
     fun replyBinding(
         @Qualifier("replyQueue") queue: Queue,
         exchange: DirectExchange,
         config: ReplyQueueConfig
-    ): Binding {
-        return BindingBuilder.bind(queue).to(exchange).with(config.routingKey)
-    }
+    ): Binding = BindingBuilder.bind(queue).to(exchange).with(config.routingKey)
 
     @Bean
-    fun producerTemplate(connectionFactory: ConnectionFactory, messageConverter: MessageConverter): RabbitTemplate {
-        val template = RabbitTemplate(connectionFactory)
-        template.messageConverter = messageConverter
-        return template
-    }
+    fun producerTemplate(connectionFactory: ConnectionFactory, messageConverter: MessageConverter): RabbitTemplate =
+        RabbitTemplate(connectionFactory).also { it.messageConverter = messageConverter }
 
     @ConfigurationProperties(prefix = "app.job.queue.request")
     data class RequestQueueConfig(

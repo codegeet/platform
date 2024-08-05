@@ -36,23 +36,17 @@ class JobConfiguration {
     }
 
     @Bean
-    fun producerBinding(producerQueue: Queue, producerExchange: DirectExchange, config: RequestQueueConfig): Binding {
-        return BindingBuilder.bind(producerQueue).to(producerExchange).with(config.routingKey)
-    }
+    fun producerBinding(producerQueue: Queue, producerExchange: DirectExchange, config: RequestQueueConfig): Binding =
+        BindingBuilder.bind(producerQueue).to(producerExchange).with(config.routingKey)
 
     @Bean
-    fun producerTemplate(connectionFactory: ConnectionFactory, jsonMessageConverter: MessageConverter): RabbitTemplate {
-        val template = RabbitTemplate(connectionFactory)
-        template.messageConverter = jsonMessageConverter
-        return template
-    }
+    fun producerTemplate(connectionFactory: ConnectionFactory, jsonMessageConverter: MessageConverter): RabbitTemplate =
+        RabbitTemplate(connectionFactory).also { it.messageConverter = jsonMessageConverter }
 
     // process execution job responses
 
     @Bean
-    fun consumerQueue(config: ReplyQueueConfig): Queue {
-        return Queue(config.name, false)
-    }
+    fun consumerQueue(config: ReplyQueueConfig): Queue = Queue(config.name, false)
 
     @Bean
     fun simpleMessageListenerContainer(
@@ -69,10 +63,8 @@ class JobConfiguration {
     fun messageListenerAdapter(
         receiver: JobClient,
         messageConverter: MessageConverter
-    ): MessageListenerAdapter {
-        val adapter = MessageListenerAdapter(receiver, JobClient.RECEIVE_METHOD_NAME)
-        adapter.setMessageConverter(messageConverter)
-        return adapter
+    ): MessageListenerAdapter = MessageListenerAdapter(receiver, JobClient.RECEIVE_METHOD_NAME).also {
+        it.setMessageConverter(messageConverter)
     }
 
     @ConfigurationProperties(prefix = "app.job.queue.reply")
