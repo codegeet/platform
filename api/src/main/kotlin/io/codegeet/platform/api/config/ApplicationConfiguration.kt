@@ -11,7 +11,7 @@ import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder
 import java.time.Clock
 
 @Configuration
-class Configuration {
+class ApplicationConfiguration {
 
     @Bean
     fun objectMapper(): ObjectMapper = Jackson2ObjectMapperBuilder.json()
