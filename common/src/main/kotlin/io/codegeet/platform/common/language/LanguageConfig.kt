@@ -32,6 +32,11 @@ object LanguageConfig {
             compilation = "kotlinc app.kt -include-runtime -d app.jar",
             invocation = "java -jar app.jar",
             fileName = "app.kt"
+        ),
+        Language.ONESCRIPT to Config(
+            compilation = null,
+            invocation = "oscript script.os",
+            fileName = "script.os"
         )
     )
 

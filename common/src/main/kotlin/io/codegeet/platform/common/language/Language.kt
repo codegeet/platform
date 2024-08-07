@@ -8,7 +8,8 @@ enum class Language(private val id: String) {
     JS("js"),
     PYTHON("python"),
     TS("ts"),
-    KOTLIN("kotlin");
+    KOTLIN("kotlin"),
+    ONESCRIPT("onescript");
 
     @JsonValue
     fun getId(): String = id
