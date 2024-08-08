@@ -1,56 +1,46 @@
 
 # CodeGeet 
 
-Welcome to the Code Execution Platform, 
-an open-source solution for executing code in isolated, secure Docker containers.  
-This platform is designed to run code snippets in a variety of programming languages, ensuring a safe execution environment for code testing, development, and educational purposes.
+Codegeet is an open-source solution for executing code in isolated, secure Docker containers. 
+The platform is designed to run code snippets in a variety of programming languages for code testing, development, and educational purposes.
 
-Here you can fina a small [demo](https://codegeet.io/).
+Here you can find a [demo](https://codegeet.io/).
 
-## Features
+## Overview
 
-- **Isolated Execution**: Each code snippet runs in a separate Docker container, providing a secure and isolated environment.
-- **Multi-Language Support**: Compatible with various programming languages, easily extendable to include more.
-- **Scalable Architecture**: Designed to handle multiple concurrent code executions efficiently.
-- **Easy Integration**: Offers a straightforward API for integrating with other applications and services.
-
-## Getting Started
+![schema.jpeg](schema.jpeg)
 
 ### Components
 
-- [Platform](https://github.com/codegeet/codegeet) that runs Docer containers and provides an API
-- [Docker Images](https://github.com/codegeet/codegeet/tree/main/images) for various programming languages
-- [Code Runner](https://github.com/codegeet/codegeet/tree/main/coderunner) installed in a container to compile and execute the code 
-  
-### Overview
-
-```mermaid
-flowchart TD
-A[CodeGeet Sandbox API] --> L{Language?}
-
-L -->|Java| J(Docker Image)
-L -->|Python| P(Docker Image)
-L -->|...| O(Docker Image)
-
-J --> RJ[Code Runner]
-P --> RP[Code Runner]
-O --> RO[Code Runner]
-```
+- [API Service](https://github.com/codegeet/platform/tree/main/api) that handles incoming requests, puts them into a queue, and stores them in the database
+- [Job Service](https://github.com/codegeet/platform/tree/main/job) reads from the queue and triggers Docker images depending on the language
+- [Docker Images](https://github.com/codegeet/platform/tree/main/images) for various programming languages
+- [Code Runner](https://github.com/codegeet/platform/tree/main/coderunner) CLI that compiles and executes the code inside a container
 
 # Interface
 
-`POST /execution`
-
-**Body**
+`POST api/execution`
 
 ```json
 {
-  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello Jesus!\"); } }",
-  "language_id": "java"
+  "code": "class Main { public static void main(String[] args) { System.out.print(args[0]); }}",
+  "language": "java",
+  "invocations": [
+    {
+      "args": ["one"]
+    },
+    {
+      "args": ["another"]
+    }
+  ]
 }
 ```
-
-**Response**
+```json
+{
+"execution_id": "e329581f-586a-40fd-adb0-a101e53bb770"
+}
+```
+`GET api/execution/{execution_id}`
 
 ```json
 {
@@ -63,21 +53,54 @@ O --> RO[Code Runner]
 **Response**
 ```json
 {
-  "execution_id": "0f98b086-a060-4a78-a80e-4beb59460225",
-  "language_id": "JAVA",
-  "code": "class Main { public static void main(String[] args) { System.out.print(\"Hello Java!\"); } }",
-  "std_out": "Hello Java!",
-  "std_err": "",
-  "error": "",
-  "exit_code": 0
+  "execution_id": "ffaffae9-c71d-4412-a132-350581454958",
+  "status": "SUCCESS",
+  "invocations": [
+    {
+      "status": "SUCCESS",
+      "details": {
+        "runtime": 24,
+        "memory": 38988
+      },
+      "std_out": "one",
+      "std_err": ""
+    },
+    {
+      "status": "SUCCESS",
+      "details": {
+        "runtime": 24,
+        "memory": 39132
+      },
+      "std_out": "another",
+      "std_err": ""
+    }
+  ]
 }
 ```
-
-# Coderunner
+or
+```json
+{
+  "execution_id": "e329581f-586a-40fd-adb0-a101e53bb770",
+  "status": "INVOCATION_ERROR",
+  "invocations": [
+    {
+      "status": "INVOCATION_ERROR",
+      "details": {
+        "runtime": 24,
+        "memory": 39340
+      },
+      "std_out": "",
+      "std_err": "Exception in thread \"main\" java.lang.ArrayIndexOutOfBoundsException: Index 0 out of bounds for length 0\n\tat Main.main(Main.java:1)\nCommand exited with non-zero status 1\n"
+    }
+  ]
+}
+```
+## Coderunner
 
 See [coderunner](https://github.com/codegeet/codegeet/tree/main/coderunner)
 
-# Special Thanks
-Special thanks for the inspiration to open-source projects:
-- [glot](https://github.com/glotcode)
+## Also
+Inspired by
 - [Judge0](https://github.com/judge0)
+- [glot](https://github.com/glotcode)
+
