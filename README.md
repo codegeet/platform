@@ -37,20 +37,12 @@ Here you can find a [demo](https://codegeet.io/).
 ```
 ```json
 {
-"execution_id": "e329581f-586a-40fd-adb0-a101e53bb770"
+  "execution_id": "e329581f-586a-40fd-adb0-a101e53bb770"
 }
 ```
+
 `GET api/execution/{execution_id}`
 
-```json
-{
-  "execution_id": " ... "
-}
-```
-
-`GET /execution/{execution_id}`
-
-**Response**
 ```json
 {
   "execution_id": "ffaffae9-c71d-4412-a132-350581454958",
