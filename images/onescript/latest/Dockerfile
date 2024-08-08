@@ -12,7 +12,7 @@ RUN set -xe && \
 
 RUN wget https://github.com/EvilBeaver/OneScript/releases/download/v1.9.0/onescript-engine_1.9.0_all.deb
 
-RUN apt-get install -y ./onescript-engine_1.9.0_all.deb
+RUN dpkg -i ./onescript-engine_1.9.0_all.deb || apt-get install -fy
 
 RUN apt-get clean &&  \
     rm -rf /var/lib/apt/lists/* /tmp/*
